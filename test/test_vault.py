@@ -90,7 +90,7 @@ def test_vault_config_when_missing():
 
 
 # To run this test you will need a token for the vimc robot user -
-# this can be found in the montagu vault as
+# this can be found in the vimc vault as
 # /secret/vimc-robot/vault-token
 #
 # This environment variable is configured on travis
