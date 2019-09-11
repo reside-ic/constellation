@@ -1,3 +1,4 @@
+import copy
 import tempfile
 import yaml
 
@@ -8,6 +9,20 @@ def read_yaml(filename):
     with open(filename, "r") as f:
         dat = yaml.load(f, Loader=yaml.SafeLoader)
     return dat
+
+
+def config_build(path, data, extra=None, options=None):
+    data = copy.deepcopy(data)
+    if extra:
+        data_extra = read_yaml("{}/{}.yml".format(path, extra))
+        config_check_additional(data_extra)
+        combine(data, data_extra)
+    if options:
+        if type(options) == list:
+            options = collapse(options)
+        config_check_additional(options)
+        combine(data, options)
+    return data
 
 
 # Utility function for centralising control over pulling information
@@ -36,9 +51,8 @@ def config_value(data, path, data_type, is_optional):
     return data
 
 
-# TODO: once we have support for easily overriding parts of
-# configuration, this can be made better with respect to optional
-# values (e.g., if url is present other keys are required).
+# TODO: This can be made better with respect to optional values (e.g.,
+# if url is present other keys are required).
 def config_vault(data, path):
     url = config_string(data, path + ["addr"], True)
     auth_method = config_string(data, path + ["auth", "method"], True)
@@ -101,3 +115,27 @@ class DockerImageReference:
 
     def __str__(self):
         return "{}/{}:{}".format(self.repo, self.name, self.tag)
+
+
+def config_check_additional(options):
+    if "container_prefix" in options:
+        raise Exception("'container_prefix' may not be modified")
+
+
+def combine(base, extra):
+    """Combine exactly two dictionaries recursively, modifying the first
+argument in place with the contets of the second"""
+    for k, v in extra.items():
+        if k in base and type(base[k]) is dict and v is not None:
+            combine(base[k], v)
+        else:
+            base[k] = v
+
+
+def collapse(options):
+    """Combine a list of dictionaries recursively, combining from left to
+right so that later dictionaries override values in earlier ones"""
+    ret = {}
+    for o in options:
+        combine(ret, o)
+    return ret
