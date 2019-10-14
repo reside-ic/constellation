@@ -27,7 +27,7 @@ def config_build(path, data, extra=None, options=None):
 
 # Utility function for centralising control over pulling information
 # out of the configuration.
-def config_value(data, path, data_type, is_optional):
+def config_value(data, path, data_type, is_optional, default=None):
     if type(path) is str:
         path = [path]
     for i, p in enumerate(path):
@@ -37,7 +37,7 @@ def config_value(data, path, data_type, is_optional):
                 raise KeyError()
         except KeyError as e:
             if is_optional:
-                return None
+                return default
             e.args = (":".join(path[:(i + 1)]),)
             raise e
 
@@ -60,26 +60,26 @@ def config_vault(data, path):
     return vault.vault_config(url, auth_method, auth_args)
 
 
-def config_string(data, path, is_optional=False):
-    return config_value(data, path, "string", is_optional)
+def config_string(data, path, is_optional=False, default=None):
+    return config_value(data, path, "string", is_optional, default)
 
 
-def config_integer(data, path, is_optional=False):
-    return config_value(data, path, "integer", is_optional)
+def config_integer(data, path, is_optional=False, default=None):
+    return config_value(data, path, "integer", is_optional, default)
 
 
-def config_boolean(data, path, is_optional=False):
-    return config_value(data, path, "boolean", is_optional)
+def config_boolean(data, path, is_optional=False, default=None):
+    return config_value(data, path, "boolean", is_optional, default)
 
 
-def config_dict(data, path, is_optional=False):
-    return config_value(data, path, "dict", is_optional)
+def config_dict(data, path, is_optional=False, default=None):
+    return config_value(data, path, "dict", is_optional, default)
 
 
-def config_dict_strict(data, path, keys, is_optional=False):
+def config_dict_strict(data, path, keys, is_optional=False, default=None):
     d = config_dict(data, path, is_optional)
     if not d:
-        return None
+        return default
     if set(keys) != set(d.keys()):
         raise ValueError("Expected keys {} for {}".format(
             ", ".join(keys), ":".join(path)))
@@ -90,8 +90,8 @@ def config_dict_strict(data, path, keys, is_optional=False):
     return d
 
 
-def config_enum(data, path, values, is_optional=False):
-    value = config_string(data, path, is_optional)
+def config_enum(data, path, values, is_optional=False, default=None):
+    value = config_string(data, path, is_optional, default)
     if value not in values:
         raise ValueError("Expected one of [{}] for {}".format(
             ", ".join(values), ":".join(path)))
