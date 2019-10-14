@@ -4,7 +4,7 @@ import pickle
 
 import constellation.docker_util as docker_util
 from constellation.config_util import \
-    DockerImageReference \
+    DockerImageReference, \
     config_build, \
     config_string, \
     read_yaml
@@ -55,35 +55,34 @@ class ConstellationConfiguration:
 
 
 class ConstellationContainer:
-    def __init__(self, prefix, network, name, image, args=None,
-                 mounts=None, ports=None, environment=None, configure=None,
-                 volumes=None):
-        self.network = network
+    def __init__(self, name, image, args=None,
+                 mounts=None, ports=None, environment=None, configure=None):
         self.name = name
-        self.name_external = "{}_{}".format(prefix, self.name)
         self.image = image
         self.args = args
-        if mounts:
-            mounts = [x.to_mount(volumes) for x in mounts]
-        self.mounts = mounts
+        self.mounts = mounts or []
         self.ports = ports
         self.environment = environment
         self.configure = configure
+
+    def name_external(self, prefix):
+        return "{}_{}".format(prefix, self.name)
 
     def pull(self):
         cl = docker.client.from_env()
         docker_util.image_pull(cl, self.name, str(self.image))
 
-    def exists(self):
+    def exists(self, prefix):
         cl = docker.client.from_env()
-        return docker_util.container_exists(cl, self.name_external)
+        return docker_util.container_exists(cl, self.name_external(prefix))
 
-    def start(self, data=None):
+    def start(self, prefix, network, volumes):
         cl = docker.client.from_env()
-        nm = self.name_external
+        nm = self.name_external(prefix)
         print("Starting {}".format(self.name))
+        mounts = [x.to_mount(volumes) for x in self.mounts]
         x = cl.containers.run(str(self.image), self.args, name=nm,
-                              mounts=self.mounts, detach=True, network="none",
+                              mounts=mounts, detach=True, network="none",
                               environment=self.environment)
         ## There is a bit of a faff here, because I do not see how we
         ## can get the container onto the network *and* alias it
@@ -95,32 +94,32 @@ class ConstellationContainer:
         ## an approch that uses the lower level api but I can't get
         ## that working).
         cl.networks.get("none").disconnect(x)
-        cl.networks.get(self.network.name).connect(x, aliases=[self.name])
+        cl.networks.get(network.name).connect(x, aliases=[self.name])
         x.reload()
         if self.configure:
-            self.configure(x, self.image, data)
+            self.configure(x, self.image)
 
-    def get(self):
+    def get(self, prefix):
         client = docker.client.from_env()
         try:
-            return client.containers.get(self.name_external)
+            return client.containers.get(self.name_external(prefix))
         except docker.errors.NotFound:
             return None
 
-    def stop(self):
-        container = self.get()
-        if container:
+    def stop(self, prefix):
+        container = self.get(prefix)
+        if container and container.status == "running":
             print("Stopping '{}'".format(self.name))
             container.stop()
 
-    def kill(self):
-        container = self.get()
-        if container:
+    def kill(self, prefix):
+        container = self.get(prefix)
+        if container and container.status == "running":
             print("Killing '{}'".format(self.name))
             container.kill()
 
-    def remove(self):
-        container = self.get()
+    def remove(self, prefix):
+        container = self.get(prefix)
         if container:
             print("Removing '{}'".format(self.name))
             container.remove()
@@ -130,27 +129,27 @@ class ConstellationContainerCollection:
     def __init__(self, collection):
         self.collection = collection
 
-    def exists(self):
-        return [x.exists() for x in self.collection]
+    def exists(self, prefix):
+        return [x.exists(prefix) for x in self.collection]
 
-    def _apply(self, method):
+    def _apply(self, method, *args):
         for x in self.collection:
-            x.__getattribute__(method)()
+            x.__getattribute__(method)(*args)
 
     def pull_images(self):
         self._apply("pull")
 
-    def stop(self):
-        self._apply("stop")
+    def stop(self, prefix):
+        self._apply("stop", prefix)
 
-    def kill(self):
-        self._apply("kill")
+    def kill(self, prefix):
+        self._apply("kill", prefix)
 
-    def remove(self):
-        self._apply("remove")
+    def remove(self, prefix):
+        self._apply("remove", prefix)
 
-    def start(self):
-        self._apply("start")
+    def start(self, prefix, network, volumes):
+        self._apply("start", prefix, network, volumes)
 
 
 class ConstellationVolume:
@@ -181,6 +180,10 @@ class ConstellationVolumeCollection:
     def create(self):
         for vol in self.collection:
             vol.create()
+
+    def remove(self):
+        for vol in self.collection:
+            vol.remove()
 
 
 class ConstellationNetwork:
