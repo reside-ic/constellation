@@ -11,8 +11,8 @@ class Constellation:
         if not volumes:
             volumes = []
         else:
-            for v in volumes:
-                assert type(v) is config.ConstellationVolume
+            volumes = [config.ConstellationVolume(k, v) for k, v in
+                       volumes.items()]
         self.volumes = config.ConstellationVolumeCollection(volumes)
 
         for x in containers:
