@@ -92,6 +92,10 @@ def volume_exists(client, name):
     return docker_exists(client.volumes, name)
 
 
+def image_exists(client, name):
+    return docker_exists(client.volumes, name)
+
+
 def docker_exists(collection, name):
     try:
         collection.get(name)
@@ -170,3 +174,21 @@ def string_from_container(container, path):
             return "".join([x.decode("utf8") for x in txt])
     finally:
         os.remove(tmp)
+
+
+def image_pull(client, name, ref):
+    print("Pulling docker image {} ({})".format(name, ref))
+    try:
+        prev = client.images.get(str(ref)).short_id
+    except docker.errors.NotFound:
+        prev = None
+    curr = client.images.pull(ref).short_id
+    status = "unchanged" if prev == curr else "updated"
+    print("    `-> {} ({})".format(curr, status))
+
+
+def container_network(container):
+    nw = list(container.attrs["NetworkSettings"]["Networks"].keys())
+    if len(nw) > 1:
+        raise Exception("Container is connected to more than one network")
+    return container.client.networks.get(nw[0])
