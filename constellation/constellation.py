@@ -1,7 +1,10 @@
 import constellation.config as config
 
 class Constellation:
-    def __init__(self, prefix, containers, network, volumes):
+    def __init__(self, name, prefix, containers, network, volumes):
+        assert type(name) is str
+        self.name = name
+
         assert type(prefix) is str
         self.prefix = prefix
 
