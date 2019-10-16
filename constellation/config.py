@@ -161,10 +161,10 @@ class ConstellationVolume:
         return docker_util.volume_exists(self.name)
 
     def create(self):
-        docker_util.ensure_volume(docker.client.from_env(), self.name)
+        docker_util.ensure_volume(self.name)
 
     def remove(self):
-        docker_util.remove_volume(docker.client.from_env(), self.name)
+        docker_util.remove_volume(self.name)
 
 
 class ConstellationVolumeCollection:
@@ -194,10 +194,10 @@ class ConstellationNetwork:
         return docker_util.network_exists(self.name)
 
     def create(self):
-        docker_util.ensure_network(docker.client.from_env(), self.name)
+        docker_util.ensure_network(self.name)
 
     def remove(self):
-        docker_util.remove_network(docker.client.from_env(), self.name)
+        docker_util.remove_network(self.name)
 
 
 class ConstellationMount:

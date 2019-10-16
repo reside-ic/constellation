@@ -79,7 +79,7 @@ def test_remove_network_removes_network():
 
     f = io.StringIO()
     with redirect_stdout(f):
-        remove_network(cl, name)
+        remove_network(name)
 
     assert f.getvalue() == "Removing network '{}'\n".format(name)
     assert name not in [x.name for x in cl.networks.list()]
@@ -90,7 +90,7 @@ def test_remove_network_is_silent_for_missing_networks():
     name = "constellation_test_nw"
     f = io.StringIO()
     with redirect_stdout(f):
-        remove_network(cl, name)
+        remove_network(name)
 
     assert f.getvalue() == ""
     assert name not in [x.name for x in cl.networks.list()]
@@ -104,7 +104,7 @@ def test_remove_volume_removes_volume():
 
     f = io.StringIO()
     with redirect_stdout(f):
-        remove_volume(cl, name)
+        remove_volume(name)
 
     assert f.getvalue() == "Removing volume '{}'\n".format(name)
     assert name not in [x.name for x in cl.volumes.list()]
@@ -115,7 +115,7 @@ def test_remove_volume_is_silent_for_missing_volumes():
     name = "constellation_test_vol"
     f = io.StringIO()
     with redirect_stdout(f):
-        remove_volume(cl, name)
+        remove_volume(name)
 
     assert f.getvalue() == ""
     assert name not in [x.name for x in cl.volumes.list()]
@@ -194,7 +194,7 @@ def test_ensure_network_creates_network():
     assert nm not in [x.name for x in cl.networks.list()]
     f = io.StringIO()
     with redirect_stdout(f):
-        ensure_network(cl, nm)
+        ensure_network(nm)
 
     msg = "Creating docker network 'constellation_example_nw'\n"
     assert f.getvalue() == msg
@@ -203,7 +203,7 @@ def test_ensure_network_creates_network():
 
     f = io.StringIO()
     with redirect_stdout(f):
-        ensure_network(cl, nm)
+        ensure_network(nm)
     assert f.getvalue() == ""
     assert nm in [x.name for x in cl.networks.list()]
 
@@ -216,7 +216,7 @@ def test_ensure_volume_creates_volume():
     assert nm not in [x.name for x in cl.volumes.list()]
     f = io.StringIO()
     with redirect_stdout(f):
-        ensure_volume(cl, nm)
+        ensure_volume(nm)
 
     msg = "Creating docker volume 'constellation_example_vol'\n"
     assert f.getvalue() == msg
@@ -225,7 +225,7 @@ def test_ensure_volume_creates_volume():
 
     f = io.StringIO()
     with redirect_stdout(f):
-        ensure_volume(cl, nm)
+        ensure_volume(nm)
     assert f.getvalue() == ""
     assert nm in [x.name for x in cl.volumes.list()]
 

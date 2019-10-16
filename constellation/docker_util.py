@@ -6,8 +6,8 @@ import time
 
 import docker
 
-
-def ensure_network(client, name):
+def ensure_network(name):
+    client = docker.client.from_env()
     try:
         client.networks.get(name)
     except docker.errors.NotFound:
@@ -15,7 +15,8 @@ def ensure_network(client, name):
         client.networks.create(name)
 
 
-def ensure_volume(client, name):
+def ensure_volume(name):
+    client = docker.client.from_env()
     try:
         client.volumes.get(name)
     except docker.errors.NotFound:
@@ -62,7 +63,8 @@ def stop_and_remove_container(client, name, kill, timeout=10):
         pass
 
 
-def remove_network(client, name):
+def remove_network(name):
+    client = docker.client.from_env()
     try:
         nw = client.networks.get(name)
     except docker.errors.NotFound:
@@ -71,7 +73,8 @@ def remove_network(client, name):
     nw.remove()
 
 
-def remove_volume(client, name):
+def remove_volume(name):
+    client = docker.client.from_env()
     try:
         v = client.volumes.get(name)
     except docker.errors.NotFound:
