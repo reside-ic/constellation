@@ -5,7 +5,6 @@ with open("README.md", "r") as f:
 
 requirements = [
     "docker",
-    "docopt",
     "hvac",
     "pytest",
     "pyyaml",
