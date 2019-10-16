@@ -61,7 +61,7 @@ class ConstellationContainer:
         self.image = image
         self.args = args
         self.mounts = mounts or []
-        self.ports = ports
+        self.ports = container_ports(ports)
         self.environment = environment
         self.configure = configure
 
@@ -83,7 +83,7 @@ class ConstellationContainer:
         mounts = [x.to_mount(volumes) for x in self.mounts]
         x = cl.containers.run(str(self.image), self.args, name=nm,
                               mounts=mounts, detach=True, network="none",
-                              environment=self.environment)
+                              ports=self.ports, environment=self.environment)
         ## There is a bit of a faff here, because I do not see how we
         ## can get the container onto the network *and* alias it
         ## without having 'create' put it on a network first.  This
@@ -216,3 +216,14 @@ def container_prefix(data, meta):
     required = default is None
     given = config_string(data, ["docker", "container_prefix"], required)
     return given or meta.default_container_prefix
+
+
+# only handles the simple case of "expose a port" and not "remap a
+# port", and assumes the port is to be exposed onto all interfaces.
+def container_ports(ports):
+    if not ports:
+        return None
+    ret = {}
+    for p in ports:
+        ret["{}/tcp".format(p)] = p
+    return ret
