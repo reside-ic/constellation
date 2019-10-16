@@ -1,4 +1,7 @@
+import docker
+
 import constellation.config as config
+import constellation.docker_util as docker_util
 
 class Constellation:
     def __init__(self, name, prefix, containers, network, volumes):
@@ -23,7 +26,24 @@ class Constellation:
         self.containers = config.ConstellationContainerCollection(containers)
 
     def status(self):
-        pass
+        client = docker.client.from_env()
+        nw_name = self.network.name
+        nw_status = "created" if docker_util.network_exists(client, nw_name) \
+                    else "missing"
+        print("Constellation {}".format(self.name))
+        print("  * Network:")
+        print("    - {}: {}".format(nw_name, nw_status))
+        print("  * Volumes:")
+        for v in self.volumes.collection:
+            v_status = "created" if docker_util.volume_exists(client, v.name) \
+                    else "missing"
+            print("    - {} ({}): {}".format(v.role, v.name, v_status))
+        print("  * Containers:")
+        for x in self.containers.collection:
+            x_container = x.get(self.prefix)
+            x_status = x_container.status if x_container else "missing"
+            x_name = x.name_external(self.prefix)
+            print("    - {} ({}): {}".format(x.name, x_name, x_status))
 
     def start(self, pull_images=False):
         if any(self.containers.exists(self.prefix)):
