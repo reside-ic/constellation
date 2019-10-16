@@ -2,7 +2,9 @@ import constellation.config as config
 import constellation.docker_util as docker_util
 
 class Constellation:
-    def __init__(self, name, prefix, containers, network, volumes):
+    def __init__(self, name, prefix, containers, network, volumes, data=None):
+        self.data = data
+
         assert type(name) is str
         self.name = name
 
@@ -49,7 +51,8 @@ class Constellation:
             self.containers.pull_images()
         self.network.create()
         self.volumes.create()
-        self.containers.start(self.prefix, self.network, self.volumes)
+        self.containers.start(self.prefix, self.network, self.volumes,
+                              self.data)
 
     def stop(self, kill=False, remove_network=False, remove_volumes=False):
         if kill:

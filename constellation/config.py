@@ -75,7 +75,7 @@ class ConstellationContainer:
         cl = docker.client.from_env()
         return docker_util.container_exists(self.name_external(prefix))
 
-    def start(self, prefix, network, volumes):
+    def start(self, prefix, network, volumes, data=None):
         cl = docker.client.from_env()
         nm = self.name_external(prefix)
         print("Starting {}".format(self.name))
@@ -96,7 +96,7 @@ class ConstellationContainer:
         cl.networks.get(network.name).connect(x, aliases=[self.name])
         x.reload()
         if self.configure:
-            self.configure(x, self.image)
+            self.configure(x, data)
 
     def get(self, prefix):
         client = docker.client.from_env()
@@ -147,8 +147,8 @@ class ConstellationContainerCollection:
     def remove(self, prefix):
         self._apply("remove", prefix)
 
-    def start(self, prefix, network, volumes):
-        self._apply("start", prefix, network, volumes)
+    def start(self, prefix, network, volumes, data=None):
+        self._apply("start", prefix, network, volumes, data)
 
 
 class ConstellationVolume:
