@@ -69,8 +69,7 @@ class ConstellationContainer:
         return "{}_{}".format(prefix, self.name)
 
     def pull(self):
-        cl = docker.client.from_env()
-        docker_util.image_pull(cl, self.name, str(self.image))
+        docker_util.image_pull(self.name, str(self.image))
 
     def exists(self, prefix):
         cl = docker.client.from_env()

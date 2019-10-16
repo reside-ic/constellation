@@ -32,7 +32,8 @@ def exec_safely(container, args):
     return ans
 
 
-def return_logs_and_remove(client, image, args=None, mounts=None):
+def return_logs_and_remove(image, args=None, mounts=None):
+    client = docker.client.from_env()
     try:
         result = client.containers.run(image,
                                        args,
@@ -44,7 +45,8 @@ def return_logs_and_remove(client, image, args=None, mounts=None):
     return result.decode("UTF-8")
 
 
-def stop_and_remove_container(client, name, kill, timeout=10):
+def stop_and_remove_container(name, kill, timeout=10):
+    client = docker.client_from_env()
     try:
         container = client.containers.get(name)
     except docker.errors.NotFound:
@@ -180,7 +182,8 @@ def string_from_container(container, path):
         os.remove(tmp)
 
 
-def image_pull(client, name, ref):
+def image_pull(name, ref):
+    client = docker.client.from_env()
     print("Pulling docker image {} ({})".format(name, ref))
     try:
         prev = client.images.get(str(ref)).short_id

@@ -33,7 +33,7 @@ def test_stop_and_remove_container_works():
     assert container_exists(name)
     f = io.StringIO()
     with redirect_stdout(f):
-        stop_and_remove_container(cl, name, False, 1)
+        stop_and_remove_container(name, False, 1)
 
     assert not container_exists(name)
     assert f.getvalue() == "Stopping '{}'\nRemoving '{}'\n".format(name, name)
@@ -46,7 +46,7 @@ def test_stop_and_remove_container_with_kill_works():
     assert container_exists(name)
     f = io.StringIO()
     with redirect_stdout(f):
-        stop_and_remove_container(cl, name, True, 1)
+        stop_and_remove_container(name, True, 1)
 
     assert not container_exists(name)
     assert f.getvalue() == "Killing '{}'\nRemoving '{}'\n".format(name, name)
@@ -58,7 +58,7 @@ def test_stop_and_remove_container_with_autoremove_works():
                                   detach=True, auto_remove=True)
     name = container.name
     assert container_exists(name)
-    stop_and_remove_container(cl, name, True, 1)
+    stop_and_remove_container(name, True, 1)
     assert not container_exists(name)
 
 
@@ -67,7 +67,7 @@ def test_stop_and_remove_container_silent_if_already_gone():
     name = "constellation_test_container"
     f = io.StringIO()
     with redirect_stdout(f):
-        stop_and_remove_container(cl, name, False)
+        stop_and_remove_container(name, False)
     assert f.getvalue() == ""
 
 
@@ -177,14 +177,12 @@ def test_container_wait_running_returns_container():
 
 
 def test_return_logs_and_remove_returns_stdout():
-    cl = docker.client.from_env()
-    result = return_logs_and_remove(cl, "alpine", ["echo", "1234"])
+    result = return_logs_and_remove("alpine", ["echo", "1234"])
     assert "1234" in result
 
 
 def test_return_logs_and_remove_returns_stderr():
-    cl = docker.client.from_env()
-    result = return_logs_and_remove(cl, "alpine", ["sh", "./nonsense"])
+    result = return_logs_and_remove("alpine", ["sh", "./nonsense"])
     assert "can't open './nonsense'" in result
 
 
