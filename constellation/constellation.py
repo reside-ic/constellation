@@ -1,4 +1,5 @@
-import constellation.config as config
+import docker
+
 import constellation.docker_util as docker_util
 
 class Constellation:
@@ -12,18 +13,18 @@ class Constellation:
         self.prefix = prefix
 
         assert type(network) is str
-        self.network = config.ConstellationNetwork(network)
+        self.network = ConstellationNetwork(network)
 
         if not volumes:
             volumes = []
         else:
-            volumes = [config.ConstellationVolume(k, v) for k, v in
+            volumes = [ConstellationVolume(k, v) for k, v in
                        volumes.items()]
-        self.volumes = config.ConstellationVolumeCollection(volumes)
+        self.volumes = ConstellationVolumeCollection(volumes)
 
         for x in containers:
-            assert type(x) is config.ConstellationContainer
-        self.containers = config.ConstellationContainerCollection(containers)
+            assert type(x) is ConstellationContainer
+        self.containers = ConstellationContainerCollection(containers)
 
     def status(self):
         nw_name = self.network.name
@@ -67,3 +68,177 @@ class Constellation:
 
     def destroy(self):
         self.stop(True, True, True)
+
+
+class ConstellationContainer:
+    def __init__(self, name, image, args=None,
+                 mounts=None, ports=None, environment=None, configure=None):
+        self.name = name
+        self.image = image
+        self.args = args
+        self.mounts = mounts or []
+        self.ports = container_ports(ports)
+        self.environment = environment
+        self.configure = configure
+
+    def name_external(self, prefix):
+        return "{}_{}".format(prefix, self.name)
+
+    def pull(self):
+        docker_util.image_pull(self.name, str(self.image))
+
+    def exists(self, prefix):
+        cl = docker.client.from_env()
+        return docker_util.container_exists(self.name_external(prefix))
+
+    def start(self, prefix, network, volumes, data=None):
+        cl = docker.client.from_env()
+        nm = self.name_external(prefix)
+        print("Starting {}".format(self.name))
+        mounts = [x.to_mount(volumes) for x in self.mounts]
+        x = cl.containers.run(str(self.image), self.args, name=nm,
+                              mounts=mounts, detach=True, network="none",
+                              ports=self.ports, environment=self.environment)
+        ## There is a bit of a faff here, because I do not see how we
+        ## can get the container onto the network *and* alias it
+        ## without having 'create' put it on a network first.  This
+        ## must be possible, but the SDK docs are a bit vague on the
+        ## topic.  So we create the container on the 'none' network,
+        ## then disconnect it from that network, then attach it to our
+        ## network with an appropriate alias (the docs suggest using
+        ## an approch that uses the lower level api but I can't get
+        ## that working).
+        cl.networks.get("none").disconnect(x)
+        cl.networks.get(network.name).connect(x, aliases=[self.name])
+        x.reload()
+        if self.configure:
+            self.configure(x, data)
+
+    def get(self, prefix):
+        client = docker.client.from_env()
+        try:
+            return client.containers.get(self.name_external(prefix))
+        except docker.errors.NotFound:
+            return None
+
+    def stop(self, prefix):
+        container = self.get(prefix)
+        if container and container.status == "running":
+            print("Stopping '{}'".format(self.name))
+            container.stop()
+
+    def kill(self, prefix):
+        container = self.get(prefix)
+        if container and container.status == "running":
+            print("Killing '{}'".format(self.name))
+            container.kill()
+
+    def remove(self, prefix):
+        container = self.get(prefix)
+        if container:
+            print("Removing '{}'".format(self.name))
+            container.remove()
+
+
+class ConstellationContainerCollection:
+    def __init__(self, collection):
+        self.collection = collection
+
+    def exists(self, prefix):
+        return [x.exists(prefix) for x in self.collection]
+
+    def _apply(self, method, *args):
+        for x in self.collection:
+            x.__getattribute__(method)(*args)
+
+    def pull_images(self):
+        self._apply("pull")
+
+    def stop(self, prefix):
+        self._apply("stop", prefix)
+
+    def kill(self, prefix):
+        self._apply("kill", prefix)
+
+    def remove(self, prefix):
+        self._apply("remove", prefix)
+
+    def start(self, prefix, network, volumes, data=None):
+        self._apply("start", prefix, network, volumes, data)
+
+
+class ConstellationVolume:
+    def __init__(self, role, name):
+        self.role = role
+        self.name = name
+
+    def exists(self):
+        return docker_util.volume_exists(self.name)
+
+    def create(self):
+        docker_util.ensure_volume(self.name)
+
+    def remove(self):
+        docker_util.remove_volume(self.name)
+
+
+class ConstellationVolumeCollection:
+    def __init__(self, collection):
+        self.collection = collection
+
+    def get(self, role):
+        for x in self.collection:
+            if x.role == role:
+                return x.name
+        raise Exception("Mount with role '{}' not defined".format(role))
+
+    def create(self):
+        for vol in self.collection:
+            vol.create()
+
+    def remove(self):
+        for vol in self.collection:
+            vol.remove()
+
+
+class ConstellationNetwork:
+    def __init__(self, name):
+        self.name = name
+
+    def exists(self):
+        return docker_util.network_exists(self.name)
+
+    def create(self):
+        docker_util.ensure_network(self.name)
+
+    def remove(self):
+        docker_util.remove_network(self.name)
+
+
+class ConstellationMount:
+    def __init__(self, name, path, **kwargs):
+        self.name = name
+        self.path = path
+        self.kwargs = kwargs
+
+    def to_mount(self, volumes):
+        return docker.types.Mount(self.path, volumes.get(self.name),
+                                  **self.kwargs)
+
+
+def container_prefix(data, meta):
+    default = meta.default_container_prefix
+    required = default is None
+    given = config_string(data, ["docker", "container_prefix"], required)
+    return given or meta.default_container_prefix
+
+
+# only handles the simple case of "expose a port" and not "remap a
+# port", and assumes the port is to be exposed onto all interfaces.
+def container_ports(ports):
+    if not ports:
+        return None
+    ret = {}
+    for p in ports:
+        ret["{}/tcp".format(p)] = p
+    return ret

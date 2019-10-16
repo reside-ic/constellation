@@ -1,12 +1,13 @@
-from constellation.constellation import Constellation
-from constellation.config import \
+from constellation.constellation import \
+    Constellation, \
     ConstellationContainer, \
-    ConstellationMount, \
-    DockerImageReference
+    ConstellationMount
+from constellation.config import \
+    ImageReference
 
 __all__ = [
     Constellation,
     ConstellationContainer,
     ConstellationMount,
-    DockerImageReference
+    ImageReference
 ]

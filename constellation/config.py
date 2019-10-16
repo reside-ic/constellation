@@ -1,228 +1,141 @@
-import base64
-import docker
-import pickle
+import copy
+import tempfile
+import yaml
 
-import constellation.docker_util as docker_util
-from constellation.config_util import \
-    DockerImageReference, \
-    config_build, \
-    config_string, \
-    read_yaml
+import constellation.vault as vault
 
 
-class ConstellationMetaConfiguration:
-    """Developer-written configuration for a configuration"""
-    def __init__(self, name, basename, container, container_path=None,
-                 default_container_prefix=None):
-        self.name = name
-        self.basename = basename
-        self.container = container
-        if not container_path:
-            container_path = "/{}.yml".format(basename)
-        self.container_path = container_path
-        self.default_container_prefix = default_container_prefix
+def read_yaml(filename):
+    with open(filename, "r") as f:
+        dat = yaml.load(f, Loader=yaml.SafeLoader)
+    return dat
 
 
-class ConstellationConfiguration:
-    def __init__(self, path, meta):
-        self.meta = meta
-        self.path = path
-        self.data = read_yaml("{}/{}.yml".format(path, meta.basename))
-        self.container_prefix = container_prefix(self.data, meta)
+def config_build(path, data, extra=None, options=None):
+    data = copy.deepcopy(data)
+    if extra:
+        data_extra = read_yaml("{}/{}.yml".format(path, extra))
+        config_check_additional(data_extra)
+        combine(data, data_extra)
+    if options:
+        if type(options) == list:
+            options = collapse(options)
+        config_check_additional(options)
+        combine(data, options)
+    return data
 
-    def build(self, extra=None, options=None):
-        return config_build(self.path, self.data, extra, options)
 
-    def fetch(self):
-        cl = docker.client.from_env()
+# Utility function for centralising control over pulling information
+# out of the configuration.
+def config_value(data, path, data_type, is_optional, default=None):
+    if type(path) is str:
+        path = [path]
+    for i, p in enumerate(path):
         try:
-            container = cl.containers.get(self.name_persist())
-        except docker.errors.NotFound:
-            return None
-        txt = docker_util.string_from_container(container,
-                                                self.meta.container_path)
-        return pickle.loads(base64.b64decode(txt))
+            data = data[p]
+            if data is None:
+                raise KeyError()
+        except KeyError as e:
+            if is_optional:
+                return default
+            e.args = (":".join(path[:(i + 1)]),)
+            raise e
 
-    def save(self, data):
-        cl = docker.client.from_env()
-        container = cl.containers.get(self.name_persist())
-        txt = base64.b64encode(pickle.dumps(data)).decode("utf8")
-        docker_util.string_into_container(txt, container,
-                                          self.meta.container_path)
+    expected = {"string": str,
+                "integer": int,
+                "boolean": bool,
+                "dict": dict}
+    if type(data) is not expected[data_type]:
+        raise ValueError("Expected {} for {}".format(
+            data_type, ":".join(path)))
+    return data
 
-    def name_persist(self):
-        return "{}_{}".format(self.container_prefix, self.meta.container)
+
+# TODO: This can be made better with respect to optional values (e.g.,
+# if url is present other keys are required).
+def config_vault(data, path):
+    url = config_string(data, path + ["addr"], True)
+    auth_method = config_string(data, path + ["auth", "method"], True)
+    auth_args = config_dict(data, path + ["auth", "args"], True)
+    return vault.vault_config(url, auth_method, auth_args)
 
 
-class ConstellationContainer:
-    def __init__(self, name, image, args=None,
-                 mounts=None, ports=None, environment=None, configure=None):
+def config_string(data, path, is_optional=False, default=None):
+    return config_value(data, path, "string", is_optional, default)
+
+
+def config_integer(data, path, is_optional=False, default=None):
+    return config_value(data, path, "integer", is_optional, default)
+
+
+def config_boolean(data, path, is_optional=False, default=None):
+    return config_value(data, path, "boolean", is_optional, default)
+
+
+def config_dict(data, path, is_optional=False, default=None):
+    return config_value(data, path, "dict", is_optional, default)
+
+
+def config_dict_strict(data, path, keys, is_optional=False, default=None):
+    d = config_dict(data, path, is_optional)
+    if not d:
+        return default
+    if set(keys) != set(d.keys()):
+        raise ValueError("Expected keys {} for {}".format(
+            ", ".join(keys), ":".join(path)))
+    for k, v in d.items():
+        if type(v) is not str:
+            raise ValueError("Expected a string for {}".format(
+                ":".join(path + [k])))
+    return d
+
+
+def config_enum(data, path, values, is_optional=False, default=None):
+    value = config_string(data, path, is_optional, default)
+    if value not in values:
+        raise ValueError("Expected one of [{}] for {}".format(
+            ", ".join(values), ":".join(path)))
+    return value
+
+
+def config_image_reference(dat, path, name="name"):
+    if type(path) is str:
+        path = [path]
+    repo = config_string(dat, path + ["repo"])
+    name = config_string(dat, path + [name])
+    tag = config_string(dat, path + ["tag"])
+    return ImageReference(repo, name, tag)
+
+
+class ImageReference:
+    def __init__(self, repo, name, tag):
+        self.repo = repo
         self.name = name
-        self.image = image
-        self.args = args
-        self.mounts = mounts or []
-        self.ports = container_ports(ports)
-        self.environment = environment
-        self.configure = configure
+        self.tag = tag
 
-    def name_external(self, prefix):
-        return "{}_{}".format(prefix, self.name)
-
-    def pull(self):
-        docker_util.image_pull(self.name, str(self.image))
-
-    def exists(self, prefix):
-        cl = docker.client.from_env()
-        return docker_util.container_exists(self.name_external(prefix))
-
-    def start(self, prefix, network, volumes, data=None):
-        cl = docker.client.from_env()
-        nm = self.name_external(prefix)
-        print("Starting {}".format(self.name))
-        mounts = [x.to_mount(volumes) for x in self.mounts]
-        x = cl.containers.run(str(self.image), self.args, name=nm,
-                              mounts=mounts, detach=True, network="none",
-                              ports=self.ports, environment=self.environment)
-        ## There is a bit of a faff here, because I do not see how we
-        ## can get the container onto the network *and* alias it
-        ## without having 'create' put it on a network first.  This
-        ## must be possible, but the SDK docs are a bit vague on the
-        ## topic.  So we create the container on the 'none' network,
-        ## then disconnect it from that network, then attach it to our
-        ## network with an appropriate alias (the docs suggest using
-        ## an approch that uses the lower level api but I can't get
-        ## that working).
-        cl.networks.get("none").disconnect(x)
-        cl.networks.get(network.name).connect(x, aliases=[self.name])
-        x.reload()
-        if self.configure:
-            self.configure(x, data)
-
-    def get(self, prefix):
-        client = docker.client.from_env()
-        try:
-            return client.containers.get(self.name_external(prefix))
-        except docker.errors.NotFound:
-            return None
-
-    def stop(self, prefix):
-        container = self.get(prefix)
-        if container and container.status == "running":
-            print("Stopping '{}'".format(self.name))
-            container.stop()
-
-    def kill(self, prefix):
-        container = self.get(prefix)
-        if container and container.status == "running":
-            print("Killing '{}'".format(self.name))
-            container.kill()
-
-    def remove(self, prefix):
-        container = self.get(prefix)
-        if container:
-            print("Removing '{}'".format(self.name))
-            container.remove()
+    def __str__(self):
+        return "{}/{}:{}".format(self.repo, self.name, self.tag)
 
 
-class ConstellationContainerCollection:
-    def __init__(self, collection):
-        self.collection = collection
-
-    def exists(self, prefix):
-        return [x.exists(prefix) for x in self.collection]
-
-    def _apply(self, method, *args):
-        for x in self.collection:
-            x.__getattribute__(method)(*args)
-
-    def pull_images(self):
-        self._apply("pull")
-
-    def stop(self, prefix):
-        self._apply("stop", prefix)
-
-    def kill(self, prefix):
-        self._apply("kill", prefix)
-
-    def remove(self, prefix):
-        self._apply("remove", prefix)
-
-    def start(self, prefix, network, volumes, data=None):
-        self._apply("start", prefix, network, volumes, data)
+def config_check_additional(options):
+    if "container_prefix" in options:
+        raise Exception("'container_prefix' may not be modified")
 
 
-class ConstellationVolume:
-    def __init__(self, role, name):
-        self.role = role
-        self.name = name
-
-    def exists(self):
-        return docker_util.volume_exists(self.name)
-
-    def create(self):
-        docker_util.ensure_volume(self.name)
-
-    def remove(self):
-        docker_util.remove_volume(self.name)
+def combine(base, extra):
+    """Combine exactly two dictionaries recursively, modifying the first
+argument in place with the contets of the second"""
+    for k, v in extra.items():
+        if k in base and type(base[k]) is dict and v is not None:
+            combine(base[k], v)
+        else:
+            base[k] = v
 
 
-class ConstellationVolumeCollection:
-    def __init__(self, collection):
-        self.collection = collection
-
-    def get(self, role):
-        for x in self.collection:
-            if x.role == role:
-                return x.name
-        raise Exception("Mount with role '{}' not defined".format(role))
-
-    def create(self):
-        for vol in self.collection:
-            vol.create()
-
-    def remove(self):
-        for vol in self.collection:
-            vol.remove()
-
-
-class ConstellationNetwork:
-    def __init__(self, name):
-        self.name = name
-
-    def exists(self):
-        return docker_util.network_exists(self.name)
-
-    def create(self):
-        docker_util.ensure_network(self.name)
-
-    def remove(self):
-        docker_util.remove_network(self.name)
-
-
-class ConstellationMount:
-    def __init__(self, name, path, **kwargs):
-        self.name = name
-        self.path = path
-        self.kwargs = kwargs
-
-    def to_mount(self, volumes):
-        return docker.types.Mount(self.path, volumes.get(self.name),
-                                  **self.kwargs)
-
-
-def container_prefix(data, meta):
-    default = meta.default_container_prefix
-    required = default is None
-    given = config_string(data, ["docker", "container_prefix"], required)
-    return given or meta.default_container_prefix
-
-
-# only handles the simple case of "expose a port" and not "remap a
-# port", and assumes the port is to be exposed onto all interfaces.
-def container_ports(ports):
-    if not ports:
-        return None
+def collapse(options):
+    """Combine a list of dictionaries recursively, combining from left to
+right so that later dictionaries override values in earlier ones"""
     ret = {}
-    for p in ports:
-        ret["{}/tcp".format(p)] = p
+    for o in options:
+        combine(ret, o)
     return ret
