@@ -30,12 +30,12 @@ def test_stop_and_remove_container_works():
     cl = docker.client.from_env()
     container = cl.containers.run("alpine", ["sleep", "10"], detach=True)
     name = container.name
-    assert container_exists(cl, name)
+    assert container_exists(name)
     f = io.StringIO()
     with redirect_stdout(f):
         stop_and_remove_container(cl, name, False, 1)
 
-    assert not container_exists(cl, name)
+    assert not container_exists(name)
     assert f.getvalue() == "Stopping '{}'\nRemoving '{}'\n".format(name, name)
 
 
@@ -43,12 +43,12 @@ def test_stop_and_remove_container_with_kill_works():
     cl = docker.client.from_env()
     container = cl.containers.run("alpine", ["sleep", "10"], detach=True)
     name = container.name
-    assert container_exists(cl, name)
+    assert container_exists(name)
     f = io.StringIO()
     with redirect_stdout(f):
         stop_and_remove_container(cl, name, True, 1)
 
-    assert not container_exists(cl, name)
+    assert not container_exists(name)
     assert f.getvalue() == "Killing '{}'\nRemoving '{}'\n".format(name, name)
 
 
@@ -57,9 +57,9 @@ def test_stop_and_remove_container_with_autoremove_works():
     container = cl.containers.run("alpine", ["sleep", "10"],
                                   detach=True, auto_remove=True)
     name = container.name
-    assert container_exists(cl, name)
+    assert container_exists(name)
     stop_and_remove_container(cl, name, True, 1)
-    assert not container_exists(cl, name)
+    assert not container_exists(name)
 
 
 def test_stop_and_remove_container_silent_if_already_gone():
@@ -199,7 +199,7 @@ def test_ensure_network_creates_network():
     msg = "Creating docker network 'constellation_example_nw'\n"
     assert f.getvalue() == msg
     assert nm in [x.name for x in cl.networks.list()]
-    assert network_exists(cl, nm)
+    assert network_exists(nm)
 
     f = io.StringIO()
     with redirect_stdout(f):
@@ -221,7 +221,7 @@ def test_ensure_volume_creates_volume():
     msg = "Creating docker volume 'constellation_example_vol'\n"
     assert f.getvalue() == msg
     assert nm in [x.name for x in cl.volumes.list()]
-    assert volume_exists(cl, nm)
+    assert volume_exists(nm)
 
     f = io.StringIO()
     with redirect_stdout(f):

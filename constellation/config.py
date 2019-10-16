@@ -74,7 +74,7 @@ class ConstellationContainer:
 
     def exists(self, prefix):
         cl = docker.client.from_env()
-        return docker_util.container_exists(cl, self.name_external(prefix))
+        return docker_util.container_exists(self.name_external(prefix))
 
     def start(self, prefix, network, volumes):
         cl = docker.client.from_env()
@@ -158,7 +158,7 @@ class ConstellationVolume:
         self.name = name
 
     def exists(self):
-        return docker_util.volume_exists(docker.client.from_env(), self.name)
+        return docker_util.volume_exists(self.name)
 
     def create(self):
         docker_util.ensure_volume(docker.client.from_env(), self.name)
@@ -191,7 +191,7 @@ class ConstellationNetwork:
         self.name = name
 
     def exists(self):
-        return docker_util.network_exists(docker.client.from_env(), self.name)
+        return docker_util.network_exists(self.name)
 
     def create(self):
         docker_util.ensure_network(docker.client.from_env(), self.name)

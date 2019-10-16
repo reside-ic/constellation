@@ -1,5 +1,3 @@
-import docker
-
 import constellation.config as config
 import constellation.docker_util as docker_util
 
@@ -26,16 +24,15 @@ class Constellation:
         self.containers = config.ConstellationContainerCollection(containers)
 
     def status(self):
-        client = docker.client.from_env()
         nw_name = self.network.name
-        nw_status = "created" if docker_util.network_exists(client, nw_name) \
+        nw_status = "created" if docker_util.network_exists(nw_name) \
                     else "missing"
         print("Constellation {}".format(self.name))
         print("  * Network:")
         print("    - {}: {}".format(nw_name, nw_status))
         print("  * Volumes:")
         for v in self.volumes.collection:
-            v_status = "created" if docker_util.volume_exists(client, v.name) \
+            v_status = "created" if docker_util.volume_exists(v.name) \
                     else "missing"
             print("    - {} ({}): {}".format(v.role, v.name, v_status))
         print("  * Containers:")
