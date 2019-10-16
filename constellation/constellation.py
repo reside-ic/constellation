@@ -99,15 +99,15 @@ class ConstellationContainer:
         x = cl.containers.run(str(self.image), self.args, name=nm,
                               mounts=mounts, detach=True, network="none",
                               ports=self.ports, environment=self.environment)
-        ## There is a bit of a faff here, because I do not see how we
-        ## can get the container onto the network *and* alias it
-        ## without having 'create' put it on a network first.  This
-        ## must be possible, but the SDK docs are a bit vague on the
-        ## topic.  So we create the container on the 'none' network,
-        ## then disconnect it from that network, then attach it to our
-        ## network with an appropriate alias (the docs suggest using
-        ## an approch that uses the lower level api but I can't get
-        ## that working).
+        # There is a bit of a faff here, because I do not see how we
+        # can get the container onto the network *and* alias it
+        # without having 'create' put it on a network first.  This
+        # must be possible, but the SDK docs are a bit vague on the
+        # topic.  So we create the container on the 'none' network,
+        # then disconnect it from that network, then attach it to our
+        # network with an appropriate alias (the docs suggest using an
+        # approch that uses the lower level api but I can't get that
+        # working).
         cl.networks.get("none").disconnect(x)
         cl.networks.get(network.name).connect(x, aliases=[self.name])
         x.reload()

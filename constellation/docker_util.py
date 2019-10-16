@@ -6,6 +6,7 @@ import time
 
 import docker
 
+
 def ensure_network(name):
     client = docker.client.from_env()
     try:
