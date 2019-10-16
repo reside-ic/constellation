@@ -46,7 +46,7 @@ def return_logs_and_remove(image, args=None, mounts=None):
 
 
 def stop_and_remove_container(name, kill, timeout=10):
-    client = docker.client_from_env()
+    client = docker.client.from_env()
     try:
         container = client.containers.get(name)
     except docker.errors.NotFound:
