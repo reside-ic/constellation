@@ -2,6 +2,7 @@ import docker
 
 import constellation.docker_util as docker_util
 
+
 class Constellation:
     def __init__(self, name, prefix, containers, network, volumes, data=None):
         self.data = data
