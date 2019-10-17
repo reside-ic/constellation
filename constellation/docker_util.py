@@ -197,10 +197,3 @@ def image_pull(name, ref):
     curr = client.images.pull(ref).short_id
     status = "unchanged" if prev == curr else "updated"
     print("    `-> {} ({})".format(curr, status))
-
-
-def container_network(container):
-    nw = list(container.attrs["NetworkSettings"]["Networks"].keys())
-    if len(nw) > 1:
-        raise Exception("Container is connected to more than one network")
-    return container.client.networks.get(nw[0])
