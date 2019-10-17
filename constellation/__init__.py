@@ -2,7 +2,7 @@ from constellation.constellation import \
     Constellation, \
     ConstellationContainer, \
     ConstellationMount
-from constellation.config import \
+from constellation.util import \
     ImageReference
 
 __all__ = [

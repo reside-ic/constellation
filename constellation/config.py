@@ -3,6 +3,7 @@ import tempfile
 import yaml
 
 import constellation.vault as vault
+from constellation.util import ImageReference
 
 
 def read_yaml(filename):
@@ -105,16 +106,6 @@ def config_image_reference(dat, path, name="name"):
     name = config_string(dat, path + [name])
     tag = config_string(dat, path + ["tag"])
     return ImageReference(repo, name, tag)
-
-
-class ImageReference:
-    def __init__(self, repo, name, tag):
-        self.repo = repo
-        self.name = name
-        self.tag = tag
-
-    def __str__(self):
-        return "{}/{}:{}".format(self.repo, self.name, self.tag)
 
 
 def config_check_additional(options):
