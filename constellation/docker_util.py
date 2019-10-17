@@ -183,11 +183,15 @@ def string_from_container(container, path):
         os.remove(tmp)
 
 
+# NOTE: you have to be careful here because the default python docker
+# client behaviour when pulling an image without specifying a tag name
+# is to pull *all* images, which is surprising.
+# https://docker-py.readthedocs.io/en/stable/images.html
 def image_pull(name, ref):
     client = docker.client.from_env()
     print("Pulling docker image {} ({})".format(name, ref))
     try:
-        prev = client.images.get(str(ref)).short_id
+        prev = client.images.get(ref).short_id
     except docker.errors.NotFound:
         prev = None
     curr = client.images.pull(ref).short_id

@@ -228,3 +228,33 @@ def test_ensure_volume_creates_volume():
     assert nm in [x.name for x in cl.volumes.list()]
 
     cl.volumes.get(nm).remove()
+
+
+def test_pull_container():
+    client = docker.client.from_env()
+    # NOTE: you have to be careful here because the default python
+    # docker client behaviour when pulling an image without specifying
+    # a tag name is to pull *all* images, which is surprising.
+    name = "hello-world:latest"
+    try:
+        client.images.remove(name)
+    except docker.errors.NotFound:
+        pass
+
+    assert not image_exists(name)
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        image_pull("example", name)
+
+    assert image_exists(name)
+    assert "Pulling docker image example (hello-world:latest)" in f.getvalue()
+    assert "updated" in f.getvalue()
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        image_pull("example", name)
+
+    assert image_exists(name)
+    assert "Pulling docker image example (hello-world:latest)" in f.getvalue()
+    assert "unchanged" in f.getvalue()
