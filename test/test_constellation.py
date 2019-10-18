@@ -51,6 +51,8 @@ def test_volume_collection():
     obj = ConstellationVolumeCollection([v1, v2])
     assert obj.get(role1) == v1.name
     assert obj.get(role2) == v2.name
+    with pytest.raises(Exception, match="Mount with role 'foo' not defined"):
+        obj.get("foo")
     obj.create()
     assert v1.exists()
     assert v2.exists()
@@ -97,15 +99,41 @@ def test_container_simple():
     assert f.getvalue() == ""
 
 
-def test_container_start():
+def test_container_start_stop_remove():
     nm = rand_str(prefix="")
     x = ConstellationContainer(nm, "library/redis:5.0")
     nw = ConstellationNetwork(rand_str())
     nw.create()
-    x.start("prefix", nw, None)
+    x.start("prefix", nw, None, auto_remove=False)
     assert x.exists("prefix")
     cl = docker.client.from_env()
     assert cl.networks.get(nw.name).containers == [x.get("prefix")]
     x.stop("prefix")
     x.remove("prefix")
     assert not x.exists("prefix")
+
+
+def test_container_start_configure():
+    def configure(container, data):
+        docker_util.string_into_container("hello\n", container, "/hello")
+
+    try:
+        nm = rand_str(prefix="")
+        x = ConstellationContainer(nm, "library/redis:5.0", configure=configure)
+        nw = ConstellationNetwork(rand_str())
+        nw.create()
+        x.start("prefix", nw, None)
+        s = docker_util.string_from_container(x.get("prefix"), "/hello")
+        assert s == "hello\n"
+    finally:
+        x.kill("prefix")
+        nw.remove()
+
+
+def test_container_pull():
+    ref = "library/hello-world:latest"
+    x = ConstellationContainer("hello", ref)
+    with ignoring_missing():
+        docker.client.from_env().images.remove(ref)
+    x.pull_image()
+    assert docker_util.image_exists(ref)
