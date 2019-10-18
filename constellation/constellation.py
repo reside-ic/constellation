@@ -89,17 +89,17 @@ class ConstellationContainer:
         docker_util.image_pull(self.name, str(self.image))
 
     def exists(self, prefix):
-        cl = docker.client.from_env()
         return docker_util.container_exists(self.name_external(prefix))
 
     def start(self, prefix, network, volumes, data=None):
         cl = docker.client.from_env()
         nm = self.name_external(prefix)
-        print("Starting {}".format(self.name))
+        print("Starting {} ({})".format(self.name, str(self.image)))
         mounts = [x.to_mount(volumes) for x in self.mounts]
         x = cl.containers.run(str(self.image), self.args, name=nm,
-                              mounts=mounts, detach=True, network="none",
-                              ports=self.ports, environment=self.environment)
+                              auto_remove=True, detach=True, mounts=mounts,
+                              network="none", ports=self.ports,
+                              environment=self.environment)
         # There is a bit of a faff here, because I do not see how we
         # can get the container onto the network *and* alias it
         # without having 'create' put it on a network first.  This
