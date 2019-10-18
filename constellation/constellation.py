@@ -227,13 +227,6 @@ class ConstellationMount:
                                   **self.kwargs)
 
 
-def container_prefix(data, meta):
-    default = meta.default_container_prefix
-    required = default is None
-    given = config_string(data, ["docker", "container_prefix"], required)
-    return given or meta.default_container_prefix
-
-
 # only handles the simple case of "expose a port" and not "remap a
 # port", and assumes the port is to be exposed onto all interfaces.
 def container_ports(ports):
