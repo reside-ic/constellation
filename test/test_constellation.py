@@ -4,6 +4,7 @@ import random
 
 from constellation.constellation import *
 
+
 def rand_str(n=10, prefix="constellation_"):
     s = "".join(random.choice(string.ascii_lowercase) for i in range(n))
     return prefix + s
