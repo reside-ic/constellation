@@ -82,6 +82,7 @@ def test_mount_with_args():
     assert m.to_mount(vols) == docker.types.Mount("path", v1.name,
                                                   read_only=True)
 
+
 def test_container_simple():
     nm = rand_str(prefix="")
     x = ConstellationContainer(nm, "library/redis:5.0")

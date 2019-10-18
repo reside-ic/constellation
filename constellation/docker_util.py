@@ -199,8 +199,10 @@ def image_pull(name, ref):
 class ignoring_missing:
     def __init__(self):
         pass
+
     def __enter__(self):
         pass
+
     def __exit__(self, type, value, traceback):
         if type is docker.errors.NotFound:
             print("was a not found")
