@@ -50,18 +50,15 @@ def stop_and_remove_container(name, kill, timeout=10):
     client = docker.client.from_env()
     try:
         container = client.containers.get(name)
-    except docker.errors.NotFound:
-        return
-    if container.status == "running":
-        if kill:
-            print("Killing '{}'".format(name))
-            container.kill()
-        else:
-            print("Stopping '{}'".format(name))
-            container.stop(timeout=timeout)
-    print("Removing '{}'".format(name))
-    try:
-        container.remove()
+        if container.status == "running":
+            if kill:
+                print("Killing '{}'".format(name))
+                container.kill()
+            else:
+                print("Stopping '{}'".format(name))
+                container.stop(timeout=timeout)
+            print("Removing '{}'".format(name))
+            container.remove()
     except docker.errors.NotFound:
         pass
 
