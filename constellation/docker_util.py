@@ -194,3 +194,14 @@ def image_pull(name, ref):
     curr = client.images.pull(ref).short_id
     status = "unchanged" if prev == curr else "updated"
     print("    `-> {} ({})".format(curr, status))
+
+
+class ignoring_missing:
+    def __init__(self):
+        pass
+    def __enter__(self):
+        pass
+    def __exit__(self, type, value, traceback):
+        if type is docker.errors.NotFound:
+            print("was a not found")
+            return True

@@ -258,3 +258,11 @@ def test_pull_container():
     assert image_exists(name)
     assert "Pulling docker image example (hello-world:latest)" in f.getvalue()
     assert "unchanged" in f.getvalue()
+
+
+def test_ignoring_missing_does_not_raise:
+    try:
+        with ignoring_missing():
+            docker.client.from_env().containers.get("nosuchcontainer")
+    except Exception:
+        pytest.fail("Unexpected error")
