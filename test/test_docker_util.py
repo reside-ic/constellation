@@ -260,7 +260,7 @@ def test_pull_container():
     assert "unchanged" in f.getvalue()
 
 
-def test_ignoring_missing_does_not_raise:
+def test_ignoring_missing_does_not_raise():
     try:
         with ignoring_missing():
             docker.client.from_env().containers.get("nosuchcontainer")
