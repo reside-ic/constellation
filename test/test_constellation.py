@@ -1,6 +1,9 @@
+import io
 import pytest
-import string
 import random
+import string
+
+from contextlib import redirect_stdout
 
 from constellation.constellation import *
 
@@ -78,3 +81,30 @@ def test_mount_with_args():
     assert m.kwargs == {"read_only": True}
     assert m.to_mount(vols) == docker.types.Mount("path", v1.name,
                                                   read_only=True)
+
+def test_container_simple():
+    nm = rand_str(prefix="")
+    x = ConstellationContainer(nm, "library/redis:5.0")
+    assert x.name_external("prefix") == "prefix_{}".format(nm)
+    assert not x.exists("prefix")
+    assert x.get("prefix") is None
+    f = io.StringIO()
+    with redirect_stdout(f):
+        x.stop("prefix")
+        x.kill("prefix")
+        x.remove("prefix")
+    assert f.getvalue() == ""
+
+
+def test_container_start():
+    nm = rand_str(prefix="")
+    x = ConstellationContainer(nm, "library/redis:5.0")
+    nw = ConstellationNetwork(rand_str())
+    nw.create()
+    x.start("prefix", nw, None)
+    assert x.exists("prefix")
+    cl = docker.client.from_env()
+    assert cl.networks.get(nw.name).containers == [x.get("prefix")]
+    x.stop("prefix")
+    x.remove("prefix")
+    assert not x.exists("prefix")

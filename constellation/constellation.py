@@ -126,19 +126,22 @@ class ConstellationContainer:
         container = self.get(prefix)
         if container and container.status == "running":
             print("Stopping '{}'".format(self.name))
-            container.stop()
+            with docker_util.ignoring_missing():
+                container.stop()
 
     def kill(self, prefix):
         container = self.get(prefix)
         if container and container.status == "running":
             print("Killing '{}'".format(self.name))
-            container.kill()
+            with docker_util.ignoring_missing():
+                container.kill()
 
     def remove(self, prefix):
         container = self.get(prefix)
         if container:
             print("Removing '{}'".format(self.name))
-            container.remove()
+            with docker_util.ignoring_missing():
+                container.remove()
 
 
 class ConstellationContainerCollection:
