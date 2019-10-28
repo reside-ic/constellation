@@ -126,6 +126,9 @@ def test_container_start_stop_remove():
         assert x.exists("prefix")
         cl = docker.client.from_env()
         assert cl.networks.get(nw.name).containers == [x.get("prefix")]
+        with pytest.raises(Exception, match="Some containers exist"):
+            x.start("prefix", nw, None)
+
         x.stop("prefix")
         x.remove("prefix")
         assert not x.exists("prefix")
@@ -168,9 +171,17 @@ def test_container_collection():
     x = ConstellationContainer("server", ref)
     y = ConstellationContainer("client", ref)
     obj = ConstellationContainerCollection([x, y])
+
+    assert obj.get("client", prefix) is None
+    with pytest.raises(Exception, match="Container 'foo' not defined"):
+        obj.get("foo", prefix)
+
     assert obj.exists(prefix) == [False, False]
     obj.pull_images()
     obj.start(prefix, nw, [])
+
+    cl = obj.get("client", prefix)
+    assert cl.name == "{}_client".format(prefix)
     assert obj.exists(prefix) == [True, True]
     obj.stop(prefix)
     obj.remove(prefix)
