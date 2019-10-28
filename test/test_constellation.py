@@ -123,7 +123,8 @@ def test_container_start_configure():
 
     try:
         nm = rand_str(prefix="")
-        x = ConstellationContainer(nm, "library/redis:5.0", configure=configure)
+        x = ConstellationContainer(nm, "library/redis:5.0",
+                                   configure=configure)
         nw = ConstellationNetwork(rand_str())
         nw.create()
         x.start("prefix", nw, None)
@@ -144,7 +145,7 @@ def test_container_pull():
 
 
 def test_container_collection():
-    ref ="library/redis:5.0"
+    ref = "library/redis:5.0"
     prefix = rand_str()
     nw = ConstellationNetwork(rand_str())
     nw.create()
@@ -169,6 +170,7 @@ def test_constellation():
     ref_server = ImageReference("library", "nginx", "latest")
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
+
     def cfg_client(container, data):
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
