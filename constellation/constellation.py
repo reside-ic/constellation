@@ -51,10 +51,7 @@ class Constellation:
                               self.data)
 
     def stop(self, kill=False, remove_network=False, remove_volumes=False):
-        if kill:
-            self.containers.kill(self.prefix)
-        else:
-            self.containers.stop(self.prefix)
+        self.containers.stop(self.prefix, kill)
         self.containers.remove(self.prefix)
         if remove_network:
             self.network.remove()
@@ -116,19 +113,16 @@ class ConstellationContainer:
         except docker.errors.NotFound:
             return None
 
-    def stop(self, prefix):
+    def stop(self, prefix, kill=False):
         container = self.get(prefix)
         if container and container.status == "running":
-            print("Stopping '{}'".format(self.name))
+            action = "Killing" if kill else "Stop"
+            print("{} '{}'".format(action, self.name))
             with docker_util.ignoring_missing():
-                container.stop()
-
-    def kill(self, prefix):
-        container = self.get(prefix)
-        if container and container.status == "running":
-            print("Killing '{}'".format(self.name))
-            with docker_util.ignoring_missing():
-                container.kill()
+                if kill:
+                    container.kill()
+                else:
+                    container.stop()
 
     def remove(self, prefix):
         container = self.get(prefix)
@@ -158,11 +152,8 @@ class ConstellationContainerCollection:
     def pull_images(self):
         self._apply("pull_image")
 
-    def stop(self, prefix):
-        self._apply("stop", prefix)
-
-    def kill(self, prefix):
-        self._apply("kill", prefix)
+    def stop(self, prefix, kill=False):
+        self._apply("stop", prefix, kill)
 
     def remove(self, prefix):
         self._apply("remove", prefix)

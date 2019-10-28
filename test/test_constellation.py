@@ -111,7 +111,7 @@ def test_container_simple():
     f = io.StringIO()
     with redirect_stdout(f):
         x.stop("prefix")
-        x.kill("prefix")
+        x.stop("prefix", True)
         x.remove("prefix")
     assert f.getvalue() == ""
 
@@ -147,7 +147,7 @@ def test_container_start_configure():
         s = docker_util.string_from_container(x.get("prefix"), "/hello")
         assert s == "hello\n"
     finally:
-        x.kill("prefix")
+        x.stop("prefix", True)
         nw.remove()
 
 
@@ -172,7 +172,7 @@ def test_container_collection():
     obj.pull_images()
     obj.start(prefix, nw, [])
     assert obj.exists(prefix) == [True, True]
-    obj.kill(prefix)
+    obj.stop(prefix)
     obj.remove(prefix)
     nw.remove()
 
