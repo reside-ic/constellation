@@ -91,13 +91,13 @@ class ConstellationContainer:
     def exists(self, prefix):
         return docker_util.container_exists(self.name_external(prefix))
 
-    def start(self, prefix, network, volumes, data=None, auto_remove=True):
+    def start(self, prefix, network, volumes, data=None):
         cl = docker.client.from_env()
         nm = self.name_external(prefix)
         print("Starting {} ({})".format(self.name, str(self.image)))
         mounts = [x.to_mount(volumes) for x in self.mounts]
         x = cl.containers.run(str(self.image), self.args, name=nm,
-                              auto_remove=auto_remove, detach=True,
+                              detach=True,
                               mounts=mounts, network="none", ports=self.ports,
                               environment=self.environment)
         # There is a bit of a faff here, because I do not see how we
@@ -147,6 +147,12 @@ class ConstellationContainer:
 class ConstellationContainerCollection:
     def __init__(self, collection):
         self.collection = collection
+
+    def get(self, name, prefix):
+        for x in self.collection:
+            if x.name == name:
+                return x.get(prefix)
+        raise Exception("Container '{}' not defined".format(name))
 
     def exists(self, prefix):
         return [x.exists(prefix) for x in self.collection]
