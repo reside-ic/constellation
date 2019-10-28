@@ -126,9 +126,6 @@ def test_container_start_stop_remove():
         assert x.exists("prefix")
         cl = docker.client.from_env()
         assert cl.networks.get(nw.name).containers == [x.get("prefix")]
-        with pytest.raises(Exception, match="Some containers exist"):
-            x.start("prefix", nw, None)
-
         x.stop("prefix")
         x.remove("prefix")
         assert not x.exists("prefix")
@@ -234,5 +231,8 @@ def test_constellation():
     x = obj.containers.get("client", prefix)
     response = docker_util.exec_safely(x, ["curl", "http://server"])
     assert "Welcome to nginx" in response.output.decode("UTF-8")
+
+    with pytest.raises(Exception, match="Some containers exist"):
+        obj.start()
 
     obj.destroy()
