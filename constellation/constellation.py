@@ -15,12 +15,6 @@ class Constellation:
 
         assert type(network) is str
         self.network = ConstellationNetwork(network)
-
-        if not volumes:
-            volumes = []
-        else:
-            volumes = [ConstellationVolume(k, v) for k, v in
-                       volumes.items()]
         self.volumes = ConstellationVolumeCollection(volumes)
 
         for x in containers:
@@ -193,8 +187,12 @@ class ConstellationVolume:
 
 
 class ConstellationVolumeCollection:
-    def __init__(self, collection):
-        self.collection = collection
+    def __init__(self, volumes):
+        if not volumes:
+            self.collection = []
+        else:
+            self.collection = [ConstellationVolume(k, v) for k, v in
+                               volumes.items()]
 
     def get(self, role):
         for x in self.collection:

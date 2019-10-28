@@ -47,42 +47,58 @@ def test_volume():
 def test_volume_collection():
     role1 = "role1"
     role2 = "role2"
-    v1 = ConstellationVolume(role1, rand_str())
-    v2 = ConstellationVolume(role2, rand_str())
-    obj = ConstellationVolumeCollection([v1, v2])
-    assert obj.get(role1) == v1.name
-    assert obj.get(role2) == v2.name
+    name1 = rand_str()
+    name2 = rand_str()
+    vols = ConstellationVolumeCollection({role1: name1, role2: name2})
+
+    assert vols.get(role1) == name1
+    assert vols.get(role2) == name2
     with pytest.raises(Exception, match="Mount with role 'foo' not defined"):
-        obj.get("foo")
-    obj.create()
-    assert v1.exists()
-    assert v2.exists()
-    obj.remove()
-    assert not v1.exists()
-    assert not v2.exists()
+        vols.get("foo")
+    vols.create()
+    assert docker_util.volume_exists(name1)
+    assert docker_util.volume_exists(name2)
+    vols.remove()
+    assert not docker_util.volume_exists(name1)
+    assert not docker_util.volume_exists(name2)
+
+
+def test_empty_volume_collection():
+    vols = ConstellationVolumeCollection({})
+    assert vols.collection == []
+    try:
+        vols.create()
+        vols.remove()
+    except Exception:
+        pytest.fail("Unexpected error")
 
 
 # This one needs the volume collection to test
 def test_mount_with_no_args():
-    v1 = ConstellationVolume("role1", rand_str())
-    v2 = ConstellationVolume("role2", rand_str())
-    vols = ConstellationVolumeCollection([v1, v2])
-    m = ConstellationMount("role1", "path")
+    role1 = "role1"
+    role2 = "role2"
+    name1 = rand_str()
+    name2 = rand_str()
+    vols = ConstellationVolumeCollection({role1: name1, role2: name2})
+    m = ConstellationMount(role1, "path")
     assert m.name == "role1"
     assert m.path == "path"
     assert m.kwargs == {}
-    assert m.to_mount(vols) == docker.types.Mount("path", v1.name)
+    assert m.to_mount(vols) == docker.types.Mount("path", name1)
 
 
 def test_mount_with_args():
-    v1 = ConstellationVolume("role1", rand_str())
-    v2 = ConstellationVolume("role2", rand_str())
-    vols = ConstellationVolumeCollection([v1, v2])
+    role1 = "role1"
+    role2 = "role2"
+    name1 = rand_str()
+    name2 = rand_str()
+    vols = ConstellationVolumeCollection({role1: name1, role2: name2})
+
     m = ConstellationMount("role1", "path", read_only=True)
     assert m.name == "role1"
     assert m.path == "path"
     assert m.kwargs == {"read_only": True}
-    assert m.to_mount(vols) == docker.types.Mount("path", v1.name,
+    assert m.to_mount(vols) == docker.types.Mount("path", name1,
                                                   read_only=True)
 
 
