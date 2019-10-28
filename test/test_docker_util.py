@@ -26,51 +26,6 @@ def test_exec_safely_throws_on_failure():
     container.kill()
 
 
-def test_stop_and_remove_container_works():
-    cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "10"], detach=True)
-    name = container.name
-    assert container_exists(name)
-    f = io.StringIO()
-    with redirect_stdout(f):
-        stop_and_remove_container(name, False, 1)
-
-    assert not container_exists(name)
-    assert f.getvalue() == "Stopping '{}'\nRemoving '{}'\n".format(name, name)
-
-
-def test_stop_and_remove_container_with_kill_works():
-    cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "10"], detach=True)
-    name = container.name
-    assert container_exists(name)
-    f = io.StringIO()
-    with redirect_stdout(f):
-        stop_and_remove_container(name, True, 1)
-
-    assert not container_exists(name)
-    assert f.getvalue() == "Killing '{}'\nRemoving '{}'\n".format(name, name)
-
-
-def test_stop_and_remove_container_with_autoremove_works():
-    cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "10"],
-                                  detach=True, auto_remove=True)
-    name = container.name
-    assert container_exists(name)
-    stop_and_remove_container(name, True, 1)
-    assert not container_exists(name)
-
-
-def test_stop_and_remove_container_silent_if_already_gone():
-    cl = docker.client.from_env()
-    name = "constellation_test_container"
-    f = io.StringIO()
-    with redirect_stdout(f):
-        stop_and_remove_container(name, False)
-    assert f.getvalue() == ""
-
-
 def test_remove_network_removes_network():
     cl = docker.client.from_env()
     name = "constellation_test_nw"

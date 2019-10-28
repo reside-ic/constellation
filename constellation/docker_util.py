@@ -46,23 +46,6 @@ def return_logs_and_remove(image, args=None, mounts=None):
     return result.decode("UTF-8")
 
 
-def stop_and_remove_container(name, kill, timeout=10):
-    client = docker.client.from_env()
-    try:
-        container = client.containers.get(name)
-        if container.status == "running":
-            if kill:
-                print("Killing '{}'".format(name))
-                container.kill()
-            else:
-                print("Stopping '{}'".format(name))
-                container.stop(timeout=timeout)
-            print("Removing '{}'".format(name))
-            container.remove()
-    except docker.errors.NotFound:
-        pass
-
-
 def remove_network(name):
     client = docker.client.from_env()
     try:
