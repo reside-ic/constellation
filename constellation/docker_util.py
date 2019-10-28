@@ -192,5 +192,4 @@ class ignoring_missing:
         # images. It's not totally obvious how we can use the subclass
         # information here either.
         if type is docker.errors.NotFound or docker.errors.ImageNotFound:
-            print("was a not found")
             return True
