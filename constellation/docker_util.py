@@ -204,6 +204,10 @@ class ignoring_missing:
         pass
 
     def __exit__(self, type, value, traceback):
-        if type is docker.errors.NotFound:
+        # For some reason, in create_api_error_from_http_exception,
+        # docker-py classes all 404 errors as NotFound *except* for
+        # images. It's not totally obvious how we can use the subclass
+        # information here either.
+        if type is docker.errors.NotFound or docker.errors.ImageNotFound:
             print("was a not found")
             return True
