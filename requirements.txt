@@ -1,0 +1,5 @@
+docker
+hvac
+pytest
+pyyaml
+vault_dev
