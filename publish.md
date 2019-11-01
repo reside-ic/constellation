@@ -6,6 +6,8 @@ The python installer is mysterious and is liable to not reflect your sources if 
 rm -rf constellation.egg-info dist
 ```
 
+But running in a brand new clone seems to be the only safe solution. Be aware that the upload step will upload any old junk in the dist directory and then break subsequent installation, with no warning that what you are doing is going to be a bad idea.
+
 Build the source distribution for publishing
 
 ```
