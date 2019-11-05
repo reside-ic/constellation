@@ -246,7 +246,6 @@ def test_constellation_fetches_secrets_on_startup():
     ref_server = ImageReference("library", "nginx", "latest")
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
-
     data = {"string": "VAULT:secret/foo:value"}
 
     with vault_dev.server() as s:
