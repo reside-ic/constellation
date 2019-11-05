@@ -1,10 +1,12 @@
 import docker
 
 import constellation.docker_util as docker_util
+import constellation.vault as vault
 
 
 class Constellation:
-    def __init__(self, name, prefix, containers, network, volumes, data=None):
+    def __init__(self, name, prefix, containers, network, volumes, data=None,
+                 vault_config=None):
         self.data = data
 
         assert type(name) is str
@@ -20,6 +22,7 @@ class Constellation:
         for x in containers:
             assert type(x) is ConstellationContainer
         self.containers = ConstellationContainerCollection(containers)
+        self.vault_config = vault_config
 
     def status(self):
         nw_name = self.network.name
@@ -43,6 +46,8 @@ class Constellation:
     def start(self, pull_images=False):
         if any(self.containers.exists(self.prefix)):
             raise Exception("Some containers exist")
+        if self.vault_config:
+            vault.resolve_secrets(self.data, self.vault_config.client())
         if pull_images:
             self.containers.pull_images()
         self.network.create()
