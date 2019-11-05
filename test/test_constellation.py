@@ -2,6 +2,7 @@ import io
 import pytest
 import random
 import string
+import vault_dev
 
 from contextlib import redirect_stdout
 
@@ -203,7 +204,6 @@ def test_constellation():
     client = ConstellationContainer("client", ref_client, arg_client,
                                     configure=cfg_client)
 
-    containers = [client, server]
     obj = Constellation(name, prefix, [server, client], network, volumes)
 
     f = io.StringIO()
@@ -236,3 +236,46 @@ def test_constellation():
         obj.start()
 
     obj.destroy()
+
+
+def test_constellation_fetches_secrets_on_startup():
+    name = "mything"
+    prefix = rand_str()
+    network = "thenw"
+    volumes = {"data": "mydata"}
+    ref_server = ImageReference("library", "nginx", "latest")
+    ref_client = ImageReference("library", "alpine", "latest")
+    arg_client = ["sleep", "1000"]
+
+    data = {"string": "VAULT:secret/foo:value"}
+
+    with vault_dev.server() as s:
+        vault_client = s.client()
+        vault_url = vault_client.url
+        secret = rand_str()
+        vault_client.write("secret/foo", value=secret)
+
+        def cfg_server(container, data):
+            res = docker_util.string_into_container(
+                data["string"], container, "/config")
+
+        def cfg_client(container, data):
+            res = container.exec_run(["apk", "add", "--no-cache", "curl"])
+            assert res.exit_code == 0
+
+        vault_config = vault.vault_config(vault_client.url, "token",
+                                          {"token": s.token})
+
+        server = ConstellationContainer("server", ref_server,
+                                        configure=cfg_server)
+        client = ConstellationContainer("client", ref_client, arg_client,
+                                        configure=cfg_client)
+
+        obj = Constellation(name, prefix, [server, client], network, volumes,
+                            data=data, vault_config=vault_config)
+
+        obj.start()
+        x = obj.containers.get("server", prefix)
+        res = docker_util.string_from_container(x, "/config")
+        assert res == secret
+        obj.destroy()
