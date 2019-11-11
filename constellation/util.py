@@ -6,3 +6,13 @@ class ImageReference:
 
     def __str__(self):
         return "{}/{}:{}".format(self.repo, self.name, self.tag)
+
+
+def tabulate(x):
+    ret = {}
+    for el in x:
+        if el in ret.keys():
+            ret[el] += 1
+        else:
+            ret[el] = 1
+    return ret
