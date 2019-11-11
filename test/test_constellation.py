@@ -1,3 +1,4 @@
+import docker
 import io
 import pytest
 import random
@@ -278,3 +279,50 @@ def test_constellation_fetches_secrets_on_startup():
         res = docker_util.string_from_container(x, "/config")
         assert res == secret
         obj.destroy()
+
+
+def test_scalable_containers():
+    name = "mything"
+    prefix = rand_str()
+    network = "thenw"
+    volumes = {"data": "mydata"}
+    ref_server = ImageReference("library", "nginx", "latest")
+    ref_client = ImageReference("library", "alpine", "latest")
+    arg_client = ["sleep", "1000"]
+
+    def cfg_client(container, data):
+        res = container.exec_run(["apk", "add", "--no-cache", "curl"])
+        assert res.exit_code == 0
+
+    server = ConstellationContainer("server", ref_server)
+    client = ConstellationService("client", ref_client, 4, args=arg_client,
+                                  configure=cfg_client)
+
+    obj = Constellation(name, prefix, [server, client], network, volumes)
+    f = io.StringIO()
+    with redirect_stdout(f):
+        obj.status()
+
+    s = f.getvalue()
+    assert "client_{1-4}): missing,missing,missing,missing" in s
+
+    obj.start()
+
+    cl = docker.client.from_env()
+    nms = [client.name_external(prefix, i + 1) for i in range(4)]
+    for nm in nms:
+        assert docker_util.container_exists(nm)
+        x = cl.containers.get(nm)
+        response = docker_util.exec_safely(x, ["curl", "http://server"])
+        assert "Welcome to nginx" in response.output.decode("UTF-8")
+
+    obj.destroy()
+
+
+def test_scalable_labels():
+    assert string_range(0) == "{}"
+    assert string_range(1) == "{1}"
+    assert string_range(2) == "{1,2}"
+    assert string_range(3) == "{1,2,3}"
+    assert string_range(4) == "{1-4}"
+    assert string_range(100) == "{1-100}"
