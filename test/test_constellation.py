@@ -306,13 +306,15 @@ def test_scalable_containers():
     s = f.getvalue()
     assert "client_{1-4}): missing,missing,missing,missing" in s
 
-    obj.start()
+    obj.start(pull_images=True)
 
-    cl = docker.client.from_env()
-    nms = [client.name_external(prefix, i + 1) for i in range(4)]
-    for nm in nms:
+    containers = client.get(prefix)
+
+    for i in range(4):
+        nm = client.name_external(prefix, i + 1)
         assert docker_util.container_exists(nm)
-        x = cl.containers.get(nm)
+        x = containers[i]
+        assert x.name == nm
         response = docker_util.exec_safely(x, ["curl", "http://server"])
         assert "Welcome to nginx" in response.output.decode("UTF-8")
 
