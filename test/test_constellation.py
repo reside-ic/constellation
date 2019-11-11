@@ -303,28 +303,22 @@ def test_scalable_containers():
     with redirect_stdout(f):
         obj.status()
 
-    s = f.getvalue()
-    assert "client_{1-4}): missing,missing,missing,missing" in s
+    assert "client_<i>): missing" in f.getvalue()
 
     obj.start(pull_images=True)
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        obj.status()
+
+    assert "client_<i>): running (4)" in f.getvalue()
 
     containers = client.get(prefix)
 
     for i in range(4):
-        nm = client.name_external(prefix, i + 1)
-        assert docker_util.container_exists(nm)
         x = containers[i]
-        assert x.name == nm
+        assert x.name.startswith("{}_client_".format(prefix))
         response = docker_util.exec_safely(x, ["curl", "http://server"])
         assert "Welcome to nginx" in response.output.decode("UTF-8")
 
     obj.destroy()
-
-
-def test_scalable_labels():
-    assert string_range(0) == "{}"
-    assert string_range(1) == "{1}"
-    assert string_range(2) == "{1,2}"
-    assert string_range(3) == "{1,2,3}"
-    assert string_range(4) == "{1-4}"
-    assert string_range(100) == "{1-100}"

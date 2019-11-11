@@ -190,6 +190,12 @@ def image_pull(name, ref):
     print("    `-> {} ({})".format(curr, status))
 
 
+def containers_matching(prefix, stopped):
+    cl = docker.client.from_env()
+    return [x for x in cl.containers.list(stopped)
+            if x.name.startswith(prefix)]
+
+
 class ignoring_missing:
     def __init__(self):
         pass

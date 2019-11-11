@@ -3,6 +3,8 @@ import docker
 import constellation.docker_util as docker_util
 import constellation.vault as vault
 
+from constellation.util import tabulate
+
 
 class Constellation:
     def __init__(self, name, prefix, containers, network, volumes, data=None,
@@ -135,54 +137,56 @@ class ConstellationContainer:
 
 # This could be achievd by inheriting from ConstellationContainer but
 # this seems more like a has-a than an is-a relationship.
-#
-# The code here could be extended to try and *detect* the containers
-# for status, stop and remove but that gets a bit hard to reason
-# about.  So for now assume that the service is of a static size.
-# That requires that changing the number of containers is an
-# error-prone operation though as you'd need to take down the service,
-# update the number and bring it up again.
 class ConstellationService():
     def __init__(self, name, image, scale, **kwargs):
         self.name = name
         self.image = image
         self.scale = scale
+        self.kwargs = kwargs
         self.base = ConstellationContainer(name, image, **kwargs)
-        self.containers = [
-            ConstellationContainer("{}_{}".format(name, i), image, **kwargs)
-            for i in range(1, self.scale + 1)]
 
-    def name_external(self, prefix, i=None):
-        if i:
-            return "{}_{}".format(self.base.name_external(prefix), i)
-        else:
-            return "{}_{}".format(
-                self.base.name_external(prefix), string_range(self.scale))
+    def _container(self, i):
+        name = "{}_{}".format(self.name, i)
+        return ConstellationContainer(name, self.image, **self.kwargs)
+
+    def name_external(self, prefix):
+        return "{}_<i>".format(self.base.name_external(prefix))
 
     def pull_image(self):
         self.base.pull_image()
 
     def exists(self, prefix):
-        return any([x.exists(prefix) for x in self.containers])
+        return bool(self.get(prefix))
 
     def start(self, prefix, network, volumes, data=None):
-        print("Starting *service* {}".format(self.base.name))
-        for x in self.containers:
-            x.start(prefix, network, volumes, data)
+        print("Starting *service* {}".format(self.name))
+        for i in range(1, self.scale + 1):
+            container = self._container(i)
+            container.start(prefix, network, volumes, data)
 
-    def get(self, prefix):
-        return [x.get(prefix) for x in self.containers]
+    def get(self, prefix, stopped=False):
+        pattern = self.base.name_external(prefix) + "_"
+        return docker_util.containers_matching(pattern, stopped)
 
     def status(self, prefix):
-        return ",".join([x.status(prefix) for x in self.containers])
+        status = tabulate([x.status for x in self.get(prefix)])
+        if status:
+            ret = ", ".join(["{} ({})".format(k, v)
+                             for k, v in status.items()])
+        else:
+            ret = "missing"
+        return ret
 
     def stop(self, prefix, kill=False):
-        for x in self.containers:
-            x.stop(prefix, kill)
+        for x in self.get(prefix):
+            docker_util.container_stop(x, kill, self.name)
 
     def remove(self, prefix):
-        for x in self.containers:
-            x.remove(prefix)
+        containers = self.get(prefix, True)
+        if containers:
+            print("Removing '{}'".format(self.name))
+            for x in containers:
+                x.remove()
 
 
 class ConstellationContainerCollection:
@@ -287,10 +291,3 @@ def container_ports(ports):
     for p in ports:
         ret["{}/tcp".format(p)] = p
     return ret
-
-
-def string_range(n):
-    if n <= 3:
-        return "{{{}}}".format(",".join([str(i + 1) for i in range(n)]))
-    else:
-        return "{{1-{}}}".format(n)
