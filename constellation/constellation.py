@@ -123,15 +123,7 @@ class ConstellationContainer:
         return container.status if container else "missing"
 
     def stop(self, prefix, kill=False):
-        container = self.get(prefix)
-        if container and container.status == "running":
-            action = "Killing" if kill else "Stop"
-            print("{} '{}'".format(action, self.name))
-            with docker_util.ignoring_missing():
-                if kill:
-                    container.kill()
-                else:
-                    container.stop()
+        docker_util.container_stop(self.get(prefix), kill, self.name)
 
     def remove(self, prefix):
         container = self.get(prefix)

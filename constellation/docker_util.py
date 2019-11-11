@@ -66,6 +66,17 @@ def remove_volume(name):
     v.remove(name)
 
 
+def container_stop(container, kill, name):
+    if container and container.status == "running":
+        action = "Killing" if kill else "Stop"
+        print("{} '{}'".format(action, name))
+        with ignoring_missing():
+            if kill:
+                container.kill()
+            else:
+                container.stop()
+
+
 def container_exists(name):
     return docker_exists("containers", name)
 
