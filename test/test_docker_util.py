@@ -200,19 +200,21 @@ def test_pull_container():
 
     f = io.StringIO()
     with redirect_stdout(f):
-        image_pull("example", name)
+        res = image_pull("example", name)
 
     assert image_exists(name)
     assert "Pulling docker image example (hello-world:latest)" in f.getvalue()
     assert "updated" in f.getvalue()
+    assert res
 
     f = io.StringIO()
     with redirect_stdout(f):
-        image_pull("example", name)
+        res = image_pull("example", name)
 
     assert image_exists(name)
     assert "Pulling docker image example (hello-world:latest)" in f.getvalue()
     assert "unchanged" in f.getvalue()
+    assert not res
 
 
 def test_ignoring_missing_does_not_raise():

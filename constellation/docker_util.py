@@ -188,6 +188,7 @@ def image_pull(name, ref):
     curr = client.images.pull(ref).short_id
     status = "unchanged" if prev == curr else "updated"
     print("    `-> {} ({})".format(curr, status))
+    return prev != curr
 
 
 def containers_matching(prefix, stopped):
