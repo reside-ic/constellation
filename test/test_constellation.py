@@ -1,8 +1,6 @@
 import docker
 import io
 import pytest
-import random
-import string
 import vault_dev
 
 from contextlib import redirect_stdout
@@ -12,8 +10,7 @@ from constellation.util import ImageReference
 
 
 def rand_str(n=10, prefix="constellation_"):
-    s = "".join(random.choice(string.ascii_lowercase) for i in range(n))
-    return prefix + s
+    return constellation.util.rand_str(n, prefix)
 
 
 def test_container_ports_creates_ports_dictionary():
