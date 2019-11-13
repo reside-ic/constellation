@@ -3,7 +3,7 @@ import docker
 import constellation.docker_util as docker_util
 import constellation.vault as vault
 
-from constellation.util import tabulate
+from constellation.util import tabulate, rand_str
 
 
 class Constellation:
@@ -145,10 +145,6 @@ class ConstellationService():
         self.kwargs = kwargs
         self.base = ConstellationContainer(name, image, **kwargs)
 
-    def _container(self, i):
-        name = "{}_{}".format(self.name, i)
-        return ConstellationContainer(name, self.image, **self.kwargs)
-
     def name_external(self, prefix):
         return "{}_<i>".format(self.base.name_external(prefix))
 
@@ -160,8 +156,9 @@ class ConstellationService():
 
     def start(self, prefix, network, volumes, data=None):
         print("Starting *service* {}".format(self.name))
-        for i in range(1, self.scale + 1):
-            container = self._container(i)
+        for i in range(self.scale):
+            name = "{}_{}".format(self.name, rand_str(8))
+            container = ConstellationContainer(name, self.image, **self.kwargs)
             container.start(prefix, network, volumes, data)
 
     def get(self, prefix, stopped=False):
