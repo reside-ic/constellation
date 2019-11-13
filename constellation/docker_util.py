@@ -66,6 +66,17 @@ def remove_volume(name):
     v.remove(name)
 
 
+def container_stop(container, kill, name):
+    if container and container.status == "running":
+        action = "Killing" if kill else "Stop"
+        print("{} '{}'".format(action, name))
+        with ignoring_missing():
+            if kill:
+                container.kill()
+            else:
+                container.stop()
+
+
 def container_exists(name):
     return docker_exists("containers", name)
 
@@ -177,6 +188,13 @@ def image_pull(name, ref):
     curr = client.images.pull(ref).short_id
     status = "unchanged" if prev == curr else "updated"
     print("    `-> {} ({})".format(curr, status))
+    return prev != curr
+
+
+def containers_matching(prefix, stopped):
+    cl = docker.client.from_env()
+    return [x for x in cl.containers.list(stopped)
+            if x.name.startswith(prefix)]
 
 
 class ignoring_missing:

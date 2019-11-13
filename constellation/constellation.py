@@ -3,6 +3,8 @@ import docker
 import constellation.docker_util as docker_util
 import constellation.vault as vault
 
+from constellation.util import tabulate
+
 
 class Constellation:
     def __init__(self, name, prefix, containers, network, volumes, data=None,
@@ -20,7 +22,8 @@ class Constellation:
         self.volumes = ConstellationVolumeCollection(volumes)
 
         for x in containers:
-            assert type(x) is ConstellationContainer
+            assert type(x) in [ConstellationContainer, ConstellationService]
+
         self.containers = ConstellationContainerCollection(containers)
         self.vault_config = vault_config
 
@@ -38,9 +41,8 @@ class Constellation:
             print("    - {} ({}): {}".format(v.role, v.name, v_status))
         print("  * Containers:")
         for x in self.containers.collection:
-            x_container = x.get(self.prefix)
-            x_status = x_container.status if x_container else "missing"
             x_name = x.name_external(self.prefix)
+            x_status = x.status(self.prefix)
             print("    - {} ({}): {}".format(x.name, x_name, x_status))
 
     def start(self, pull_images=False):
@@ -118,16 +120,12 @@ class ConstellationContainer:
         except docker.errors.NotFound:
             return None
 
-    def stop(self, prefix, kill=False):
+    def status(self, prefix):
         container = self.get(prefix)
-        if container and container.status == "running":
-            action = "Killing" if kill else "Stop"
-            print("{} '{}'".format(action, self.name))
-            with docker_util.ignoring_missing():
-                if kill:
-                    container.kill()
-                else:
-                    container.stop()
+        return container.status if container else "missing"
+
+    def stop(self, prefix, kill=False):
+        docker_util.container_stop(self.get(prefix), kill, self.name)
 
     def remove(self, prefix):
         container = self.get(prefix)
@@ -135,6 +133,60 @@ class ConstellationContainer:
             print("Removing '{}'".format(self.name))
             with docker_util.ignoring_missing():
                 container.remove()
+
+
+# This could be achievd by inheriting from ConstellationContainer but
+# this seems more like a has-a than an is-a relationship.
+class ConstellationService():
+    def __init__(self, name, image, scale, **kwargs):
+        self.name = name
+        self.image = image
+        self.scale = scale
+        self.kwargs = kwargs
+        self.base = ConstellationContainer(name, image, **kwargs)
+
+    def _container(self, i):
+        name = "{}_{}".format(self.name, i)
+        return ConstellationContainer(name, self.image, **self.kwargs)
+
+    def name_external(self, prefix):
+        return "{}_<i>".format(self.base.name_external(prefix))
+
+    def pull_image(self):
+        self.base.pull_image()
+
+    def exists(self, prefix):
+        return bool(self.get(prefix))
+
+    def start(self, prefix, network, volumes, data=None):
+        print("Starting *service* {}".format(self.name))
+        for i in range(1, self.scale + 1):
+            container = self._container(i)
+            container.start(prefix, network, volumes, data)
+
+    def get(self, prefix, stopped=False):
+        pattern = self.base.name_external(prefix) + "_"
+        return docker_util.containers_matching(pattern, stopped)
+
+    def status(self, prefix):
+        status = tabulate([x.status for x in self.get(prefix)])
+        if status:
+            ret = ", ".join(["{} ({})".format(k, v)
+                             for k, v in status.items()])
+        else:
+            ret = "missing"
+        return ret
+
+    def stop(self, prefix, kill=False):
+        for x in self.get(prefix):
+            docker_util.container_stop(x, kill, self.name)
+
+    def remove(self, prefix):
+        containers = self.get(prefix, True)
+        if containers:
+            print("Removing '{}'".format(self.name))
+            for x in containers:
+                x.remove()
 
 
 class ConstellationContainerCollection:
