@@ -5,8 +5,8 @@ import vault_dev
 
 from contextlib import redirect_stdout
 
+import constellation
 from constellation.constellation import *
-from constellation.util import ImageReference
 
 
 def rand_str(n=10, prefix="constellation_"):
