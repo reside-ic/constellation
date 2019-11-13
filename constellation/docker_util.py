@@ -120,6 +120,23 @@ def container_wait_running(container, poll=0.1, timeout=1):
     return container
 
 
+def container_remove_wait(container, poll=0.1, timeout=1):
+    name = container.name
+    for i in range(math.ceil(timeout / poll)):
+        try:
+            container.remove()
+        except docker.errors.APIError:
+            pass
+        time.sleep(poll)
+
+    for i in range(math.ceil(timeout / poll)):
+        if not container_exists(name):
+            return
+        time.sleep(poll)
+
+    raise Exception("container '{}' was not removed in time".format(name))
+
+
 def simple_tar(path, name):
     f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode="w", fileobj=f)
