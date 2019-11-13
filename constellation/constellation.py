@@ -45,8 +45,8 @@ class Constellation:
             x_status = x.status(self.prefix)
             print("    - {} ({}): {}".format(x.name, x_name, x_status))
 
-    def start(self, pull_images=False):
-        if any(self.containers.exists(self.prefix)):
+    def start(self, pull_images=False, subset=None):
+        if subset is None and any(self.containers.exists(self.prefix)):
             raise Exception("Some containers exist")
         if self.vault_config:
             vault.resolve_secrets(self.data, self.vault_config.client())
@@ -55,7 +55,7 @@ class Constellation:
         self.network.create()
         self.volumes.create()
         self.containers.start(self.prefix, self.network, self.volumes,
-                              self.data)
+                              self.data, subset)
 
     def stop(self, kill=False, remove_network=False, remove_volumes=False):
         self.containers.stop(self.prefix, kill)
@@ -203,9 +203,10 @@ class ConstellationContainerCollection:
     def exists(self, prefix):
         return [x.exists(prefix) for x in self.collection]
 
-    def _apply(self, method, *args):
+    def _apply(self, method, *args, subset=None):
         for x in self.collection:
-            x.__getattribute__(method)(*args)
+            if subset is None or x.name in subset:
+                x.__getattribute__(method)(*args)
 
     def pull_images(self):
         self._apply("pull_image")
@@ -216,8 +217,8 @@ class ConstellationContainerCollection:
     def remove(self, prefix):
         self._apply("remove", prefix)
 
-    def start(self, prefix, network, volumes, data=None):
-        self._apply("start", prefix, network, volumes, data)
+    def start(self, prefix, network, volumes, data=None, subset=None):
+        self._apply("start", prefix, network, volumes, data, subset=subset)
 
 
 class ConstellationVolume:
