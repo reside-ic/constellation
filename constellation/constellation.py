@@ -190,11 +190,15 @@ class ConstellationContainerCollection:
     def __init__(self, collection):
         self.collection = collection
 
-    def get(self, name, prefix):
+    def find(self, name):
         for x in self.collection:
             if x.name == name:
-                return x.get(prefix)
+                return x
         raise Exception("Container '{}' not defined".format(name))
+
+
+    def get(self, name, prefix, container=True):
+        return self.find(name).get(prefix)
 
     def exists(self, prefix):
         return [x.exists(prefix) for x in self.collection]
