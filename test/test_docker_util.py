@@ -223,3 +223,14 @@ def test_ignoring_missing_does_not_raise():
             docker.client.from_env().containers.get("nosuchcontainer")
     except Exception:
         pytest.fail("Unexpected error")
+
+
+def test_container_remove_wait():
+    cl = docker.client.from_env()
+    container = cl.containers.run("alpine", ["sleep", "100"], detach=True)
+    with pytest.raises(Exception, match="was not removed in time"):
+        container_remove_wait(container, timeout=0.1)
+
+    container.kill()
+    container_remove_wait(container, timeout=10)
+    assert not container_exists(container.name)
