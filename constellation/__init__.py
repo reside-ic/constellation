@@ -7,9 +7,9 @@ from constellation.util import \
     ImageReference
 
 __all__ = [
-    Constellation,
-    ConstellationContainer,
-    ConstellationService,
-    ConstellationMount,
-    ImageReference
+    "Constellation",
+    "ConstellationContainer",
+    "ConstellationService",
+    "ConstellationMount",
+    "ImageReference"
 ]
