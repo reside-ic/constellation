@@ -7,6 +7,7 @@ from contextlib import redirect_stdout
 
 import constellation
 from constellation.constellation import *
+from constellation.util import ImageReference
 
 
 def rand_str(n=10, prefix="constellation_"):
@@ -318,4 +319,32 @@ def test_scalable_containers():
         response = docker_util.exec_safely(x, ["curl", "http://server"])
         assert "Welcome to nginx" in response.output.decode("UTF-8")
 
+    obj.destroy()
+
+
+def test_start_subset():
+    name = "mything"
+    prefix = rand_str()
+    network = "thenw"
+    volumes = {"data": "mydata"}
+    ref_server = ImageReference("library", "nginx", "latest")
+    ref_client = ImageReference("library", "alpine", "latest")
+    arg_client = ["sleep", "1000"]
+
+    def cfg_client(container, data):
+        res = container.exec_run(["apk", "add", "--no-cache", "curl"])
+        assert res.exit_code == 0
+
+    server = ConstellationContainer("server", ref_server)
+    client = ConstellationContainer("client", ref_client, arg_client,
+                                    configure=cfg_client)
+
+    obj = Constellation(name, prefix, [server, client], network, volumes)
+    obj.start(subset=["server"])
+    assert obj.network.exists()
+    assert obj.volumes.collection[0].exists()
+    assert obj.containers.find("server").exists(prefix)
+    assert not obj.containers.find("client").exists(prefix)
+    obj.start(subset=["client"])
+    assert obj.containers.find("client").exists(prefix)
     obj.destroy()

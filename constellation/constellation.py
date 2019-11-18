@@ -196,7 +196,6 @@ class ConstellationContainerCollection:
                 return x
         raise Exception("Container '{}' not defined".format(name))
 
-
     def get(self, name, prefix, container=True):
         return self.find(name).get(prefix)
 
