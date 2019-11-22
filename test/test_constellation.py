@@ -1,19 +1,17 @@
 import docker
 import io
 import pytest
-import random
-import string
 import vault_dev
 
 from contextlib import redirect_stdout
 
+import constellation
 from constellation.constellation import *
 from constellation.util import ImageReference
 
 
 def rand_str(n=10, prefix="constellation_"):
-    s = "".join(random.choice(string.ascii_lowercase) for i in range(n))
-    return prefix + s
+    return constellation.util.rand_str(n, prefix)
 
 
 def test_container_ports_creates_ports_dictionary():
@@ -320,5 +318,78 @@ def test_scalable_containers():
         assert x.name.startswith("{}_client_".format(prefix))
         response = docker_util.exec_safely(x, ["curl", "http://server"])
         assert "Welcome to nginx" in response.output.decode("UTF-8")
+
+    obj.destroy()
+
+
+def test_start_subset():
+    name = "mything"
+    prefix = rand_str()
+    network = "thenw"
+    volumes = {"data": "mydata"}
+    ref_server = ImageReference("library", "nginx", "latest")
+    ref_client = ImageReference("library", "alpine", "latest")
+    arg_client = ["sleep", "1000"]
+
+    def cfg_client(container, data):
+        res = container.exec_run(["apk", "add", "--no-cache", "curl"])
+        assert res.exit_code == 0
+
+    server = ConstellationContainer("server", ref_server)
+    client = ConstellationContainer("client", ref_client, arg_client,
+                                    configure=cfg_client)
+
+    obj = Constellation(name, prefix, [server, client], network, volumes)
+    obj.start(subset=["server"])
+    assert obj.network.exists()
+    assert obj.volumes.collection[0].exists()
+    assert obj.containers.find("server").exists(prefix)
+    assert not obj.containers.find("client").exists(prefix)
+    obj.start(subset=["client"])
+    assert obj.containers.find("client").exists(prefix)
+    obj.destroy()
+
+
+def test_restart_pulls_and_replaces_containers():
+    name = "mything"
+    prefix = rand_str()
+    network = "thenw"
+    volumes = {"data": "mydata"}
+    ref_server = ImageReference("library", "nginx", "latest")
+    ref_client = ImageReference("library", "alpine", "latest")
+    arg_client = ["sleep", "1000"]
+
+    def cfg_client(container, data):
+        res = container.exec_run(["apk", "add", "--no-cache", "curl"])
+        assert res.exit_code == 0
+
+    server = ConstellationContainer("server", ref_server)
+    client = ConstellationContainer("client", ref_client, arg_client,
+                                    configure=cfg_client)
+
+    obj = Constellation(name, prefix, [server, client], network, volumes)
+    obj.start()
+
+    id_server = obj.containers.get("server", obj.prefix).id
+    id_client = obj.containers.get("client", obj.prefix).id
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        obj.restart()
+
+    s = f.getvalue()
+    assert s.startswith("Pulling docker image")
+    assert "Pulling docker image server" in s
+    assert "Pulling docker image client" in s
+    assert s.strip().split("\n")[4:] == [
+        "Stop 'server'",
+        "Stop 'client'",
+        "Removing 'server'",
+        "Removing 'client'",
+        'Starting server (library/nginx:latest)',
+        'Starting client (library/alpine:latest)']
+
+    assert obj.containers.get("server", obj.prefix).id != id_server
+    assert obj.containers.get("client", obj.prefix).id != id_client
 
     obj.destroy()

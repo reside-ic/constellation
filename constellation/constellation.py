@@ -3,7 +3,7 @@ import docker
 import constellation.docker_util as docker_util
 import constellation.vault as vault
 
-from constellation.util import tabulate
+from constellation.util import tabulate, rand_str
 
 
 class Constellation:
@@ -45,8 +45,8 @@ class Constellation:
             x_status = x.status(self.prefix)
             print("    - {} ({}): {}".format(x.name, x_name, x_status))
 
-    def start(self, pull_images=False):
-        if any(self.containers.exists(self.prefix)):
+    def start(self, pull_images=False, subset=None):
+        if subset is None and any(self.containers.exists(self.prefix)):
             raise Exception("Some containers exist")
         if self.vault_config:
             vault.resolve_secrets(self.data, self.vault_config.client())
@@ -55,7 +55,7 @@ class Constellation:
         self.network.create()
         self.volumes.create()
         self.containers.start(self.prefix, self.network, self.volumes,
-                              self.data)
+                              self.data, subset)
 
     def stop(self, kill=False, remove_network=False, remove_volumes=False):
         self.containers.stop(self.prefix, kill)
@@ -64,6 +64,12 @@ class Constellation:
             self.network.remove()
         if remove_volumes:
             self.volumes.remove()
+
+    def restart(self, pull_images=True):
+        if pull_images:
+            self.containers.pull_images()
+        self.stop()
+        self.start()
 
     def destroy(self):
         self.stop(True, True, True)
@@ -145,10 +151,6 @@ class ConstellationService():
         self.kwargs = kwargs
         self.base = ConstellationContainer(name, image, **kwargs)
 
-    def _container(self, i):
-        name = "{}_{}".format(self.name, i)
-        return ConstellationContainer(name, self.image, **self.kwargs)
-
     def name_external(self, prefix):
         return "{}_<i>".format(self.base.name_external(prefix))
 
@@ -160,8 +162,9 @@ class ConstellationService():
 
     def start(self, prefix, network, volumes, data=None):
         print("Starting *service* {}".format(self.name))
-        for i in range(1, self.scale + 1):
-            container = self._container(i)
+        for i in range(self.scale):
+            name = "{}_{}".format(self.name, rand_str(8))
+            container = ConstellationContainer(name, self.image, **self.kwargs)
             container.start(prefix, network, volumes, data)
 
     def get(self, prefix, stopped=False):
@@ -193,18 +196,22 @@ class ConstellationContainerCollection:
     def __init__(self, collection):
         self.collection = collection
 
-    def get(self, name, prefix):
+    def find(self, name):
         for x in self.collection:
             if x.name == name:
-                return x.get(prefix)
+                return x
         raise Exception("Container '{}' not defined".format(name))
+
+    def get(self, name, prefix, container=True):
+        return self.find(name).get(prefix)
 
     def exists(self, prefix):
         return [x.exists(prefix) for x in self.collection]
 
-    def _apply(self, method, *args):
+    def _apply(self, method, *args, subset=None):
         for x in self.collection:
-            x.__getattribute__(method)(*args)
+            if subset is None or x.name in subset:
+                x.__getattribute__(method)(*args)
 
     def pull_images(self):
         self._apply("pull_image")
@@ -215,8 +222,8 @@ class ConstellationContainerCollection:
     def remove(self, prefix):
         self._apply("remove", prefix)
 
-    def start(self, prefix, network, volumes, data=None):
-        self._apply("start", prefix, network, volumes, data)
+    def start(self, prefix, network, volumes, data=None, subset=None):
+        self._apply("start", prefix, network, volumes, data, subset=subset)
 
 
 class ConstellationVolume:
