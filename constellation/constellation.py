@@ -65,6 +65,12 @@ class Constellation:
         if remove_volumes:
             self.volumes.remove()
 
+    def restart(self, pull_images=True):
+        if pull_images:
+            self.containers.pull_images()
+        self.stop()
+        self.start()
+
     def destroy(self):
         self.stop(True, True, True)
 
