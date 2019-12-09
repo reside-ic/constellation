@@ -393,3 +393,53 @@ def test_restart_pulls_and_replaces_containers():
     assert obj.containers.get("client", obj.prefix).id != id_client
 
     obj.destroy()
+
+
+# This is not a very pretty test because I (Rich) am not very good at
+# python mocking.  The behaviour that we want to test is that we
+# resolve secrets before pulling any images (which takes a little
+# while).  This test simply checks the strings that the methods print
+# to screen, but some fancy mocking could be used to test that
+# resolve_secrets() is in fact called before pull_images()
+def test_constellation_fetches_secrets_first_thing_on_startup():
+    name = "mything"
+    prefix = rand_str()
+    network = "thenw"
+    volumes = {"data": "mydata"}
+    ref_server = ImageReference("library", "nginx", "latest")
+    ref_client = ImageReference("library", "alpine", "latest")
+    arg_client = ["sleep", "1000"]
+    data = {"string": "VAULT:secret/foo:value"}
+
+    with vault_dev.server() as s:
+        vault_client = s.client()
+        vault_url = vault_client.url
+        secret = rand_str()
+        vault_client.write("secret/foo", value=secret)
+
+        def cfg_server(container, data):
+            res = docker_util.string_into_container(
+                data["string"], container, "/config")
+
+        def cfg_client(container, data):
+            res = container.exec_run(["apk", "add", "--no-cache", "curl"])
+            assert res.exit_code == 0
+
+        vault_config = vault.vault_config(vault_client.url, "token",
+                                          {"token": s.token})
+
+        server = ConstellationContainer("server", ref_server,
+                                        configure=cfg_server)
+        client = ConstellationContainer("client", ref_client, arg_client,
+                                        configure=cfg_client)
+
+        obj = Constellation(name, prefix, [server, client], network, volumes,
+                            data=data, vault_config=vault_config)
+        f = io.StringIO()
+        with redirect_stdout(f):
+            obj.restart()
+
+        output = f.getvalue()
+        assert "Resolving secrets" in output
+        assert output.find("Resolving secrets") < output.find("Pulling docker")
+        obj.destroy()

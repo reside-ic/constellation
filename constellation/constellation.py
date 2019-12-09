@@ -73,6 +73,7 @@ class Constellation:
 
     def resolve_secrets(self):
         if self.vault_config:
+            print("Resolving secrets")
             vault.resolve_secrets(self.data, self.vault_config.client())
 
     def destroy(self):
