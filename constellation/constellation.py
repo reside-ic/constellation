@@ -76,6 +76,14 @@ class Constellation:
 
 
 class ConstellationContainer:
+    """For ports, to remap a port pass a tuple (port_container,
+    port_host), such as:
+
+    ports=[80, (2222, 3333)]
+
+    which will expose port 80 (same port on both the container and
+    host) and expose port 2222 in the container as 3333 on the host.
+    """
     def __init__(self, name, image, args=None,
                  mounts=None, ports=None, environment=None, configure=None):
         self.name = name
@@ -289,12 +297,13 @@ class ConstellationMount:
                                   **self.kwargs)
 
 
-# only handles the simple case of "expose a port" and not "remap a
-# port", and assumes the port is to be exposed onto all interfaces.
 def container_ports(ports):
     if not ports:
         return None
     ret = {}
     for p in ports:
-        ret["{}/tcp".format(p)] = p
+        if type(p) is int:
+            p = (p, p)
+        p_container, p_host = p
+        ret["{}/tcp".format(p_container)] = p_host
     return ret
