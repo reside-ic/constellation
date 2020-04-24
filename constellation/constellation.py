@@ -48,8 +48,7 @@ class Constellation:
     def start(self, pull_images=False, subset=None):
         if subset is None and any(self.containers.exists(self.prefix)):
             raise Exception("Some containers exist")
-        if self.vault_config:
-            vault.resolve_secrets(self.data, self.vault_config.client())
+        self.resolve_secrets()
         if pull_images:
             self.containers.pull_images()
         self.network.create()
@@ -66,10 +65,16 @@ class Constellation:
             self.volumes.remove()
 
     def restart(self, pull_images=True):
+        self.resolve_secrets()
         if pull_images:
             self.containers.pull_images()
         self.stop()
         self.start()
+
+    def resolve_secrets(self):
+        if self.vault_config:
+            print("Resolving secrets")
+            vault.resolve_secrets(self.data, self.vault_config.client())
 
     def destroy(self):
         self.stop(True, True, True)
