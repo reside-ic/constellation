@@ -148,9 +148,11 @@ def simple_tar(path, name):
 
 
 def simple_tar_string(text, name):
+    if type(text) == str:
+        text = bytes(text, "utf-8")
     try:
         fd, tmp = tempfile.mkstemp(text=True)
-        with os.fdopen(fd, "w") as f:
+        with os.fdopen(fd, "wb") as f:
             f.write(text)
         return simple_tar(tmp, name)
     finally:
@@ -176,6 +178,10 @@ def file_into_container(local_path, container, destination_path, name):
 
 
 def string_from_container(container, path):
+    return bytes_from_container(container, path).decode("utf-8")
+
+
+def bytes_from_container(container, path):
     stream, status = container.get_archive(path)
     try:
         fd, tmp = tempfile.mkstemp(text=False)
@@ -185,8 +191,7 @@ def string_from_container(container, path):
         with open(tmp, "rb") as f:
             t = tarfile.open(mode="r", fileobj=f)
             p = t.extractfile(os.path.basename(path))
-            txt = p.readlines()
-            return "".join([x.decode("utf8") for x in txt])
+            return p.read()
     finally:
         os.remove(tmp)
 
