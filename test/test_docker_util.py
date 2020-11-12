@@ -90,6 +90,21 @@ def test_string_into_container():
     container.kill()
 
 
+def test_string_into_container_allows_bytes():
+    cl = docker.client.from_env()
+    container = cl.containers.run("alpine", ["sleep", "20"],
+                                  detach=True, auto_remove=True)
+    text = bytes(range(255))
+    string_into_container(text, container, "/test")
+    out = container.exec_run(["cat", "/test"])
+    assert out.exit_code == 0
+    assert out.output == text
+
+    assert bytes_from_container(container, "/test") == text
+
+    container.kill()
+
+
 def test_file_into_container():
     cl = docker.client.from_env()
     container = cl.containers.run("alpine", ["sleep", "20"],
