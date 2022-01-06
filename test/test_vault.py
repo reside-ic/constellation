@@ -123,6 +123,53 @@ def test_vault_config_login_no_args():
             assert cfg.client().is_authenticated()
 
 
+def test_vault_config_approle_login():
+    with vault_dev.server() as s:
+        cl = s.client()
+        cl.sys.enable_auth_method(method_type="approle")
+        cl.auth.approle.create_or_update_approle(
+            role_name = "test-role"
+        )
+
+        url = "http://localhost:{}".format(s.port)
+        role_id = cl.auth.approle.read_role_id(
+            role_name = "test-role"
+        )["data"]["role_id"]
+        secret_id = cl.auth.approle.generate_secret_id(
+            role_name = "test-role"
+        )["data"]["secret_id"]
+        with mock.patch.dict(os.environ, {
+            "VAULT_AUTH_ROLE_ID": role_id,
+            "VAULT_AUTH_SECRET_ID": secret_id 
+            }):
+            cfg = vault_config(url, "approle", None)
+            assert cfg.client().is_authenticated()
+
+def test_vault_config_approle_login_fallback():
+    if "VAULT_TEST_GITHUB_PAT" not in os.environ:
+        pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
+    with vault_dev.server() as s:
+        cl = s.client()
+        cl.sys.enable_auth_method(method_type="github")
+        cl.write("auth/github/config", organization="vimc")
+        cl.sys.enable_auth_method(method_type="approle")
+        cl.auth.approle.create_or_update_approle(
+            role_name = "test-role"
+        )
+
+        url = "http://localhost:{}".format(s.port)
+        role_id = cl.auth.approle.read_role_id(
+            role_name = "test-role"
+        )["data"]["role_id"]
+        token = os.environ["VAULT_TEST_GITHUB_PAT"]
+        with mock.patch.dict(os.environ, {
+            "VAULT_AUTH_ROLE_ID": role_id,
+            "VAULT_AUTH_GITHUB_TOKEN": token
+            }):
+            cfg = vault_config(url, "approle", None)
+            assert cfg.client().is_authenticated()
+
+
 # Utility required to work around https://github.com/hvac/hvac/issues/421
 def test_drop_envvar_removes_envvar():
     name = "VAULT_DEV_TEST_VAR"
