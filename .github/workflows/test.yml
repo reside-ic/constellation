@@ -14,7 +14,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      VAULT_TEST_GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      VAULT_TEST_GITHUB_PAT: ${{ secrets.VAULT_TEST_GITHUB_PAT }}
     steps:
       - uses: actions/checkout@v2
 
