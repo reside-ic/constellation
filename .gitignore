@@ -43,5 +43,6 @@ pip-delete-this-directory.txt
 
 # IDE files
 .idea
+.vscode
 
 .pytest_cache

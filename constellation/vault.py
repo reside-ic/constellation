@@ -73,16 +73,14 @@ class vault_config:
             if not self.auth_args:
                 self.auth_args = {}
 
-            if self.auth_method == "approle":
-                self.auth_args = get_approle_auth(self.auth_args)
-                if "role_id" not in self.auth_args or \
-                        "secret_id" not in self.auth_args:
-                    self.auth_args = {}
-                    self.auth_method = "github"
-
             if self.auth_method == "github":
                 if "token" not in self.auth_args:
                     self.auth_args["token"] = get_github_token()
+            elif self.auth_method == "approle":
+                if "role_id" not in self.auth_args:
+                    self.auth_args["role_id"] = get_envvar("VAULT_AUTH_ROLE_ID")
+                if "secret_id" not in self.auth_args:
+                    self.auth_args["secret_id"] = get_envvar("VAULT_AUTH_SECRET_ID")
 
             getattr(cl.auth, self.auth_method).login(**self.auth_args)
         return cl
@@ -99,23 +97,12 @@ def get_github_token():
     except KeyError:
         return input("Enter GitHub token for vault: ").strip()
 
-
-def get_approle_auth(auth_args):
-    if "role_id" not in auth_args:
-        try:
-            auth_args["role_id"] = os.environ["VAULT_AUTH_ROLE_ID"]
-        except KeyError:
-            print("Role ID not found falling back to auth using github")
-            return auth_args
-
-    if "secret_id" not in auth_args:
-        try:
-            auth_args["secret_id"] = os.environ["VAULT_AUTH_SECRET_ID"]
-        except KeyError:
-            print("Secret ID not found falling back to auth using github")
-            return auth_args
-    return auth_args
-
+def get_envvar(name):
+    try:
+        return os.environ[name]
+    except KeyError:
+        raise KeyError("Did not find env var '{}'".format(
+            name))
 
 def drop_envvar(name):
     if name in os.environ:
