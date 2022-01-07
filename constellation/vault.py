@@ -104,14 +104,14 @@ def get_approle_auth(auth_args):
             auth_args["role_id"] = os.environ["VAULT_AUTH_ROLE_ID"]
         except KeyError:
             print("Role ID not found falling back to auth using github")
-            return
-            
+            return auth_args
+
     if "secret_id" not in auth_args:
         try:
             auth_args["secret_id"] = os.environ["VAULT_AUTH_SECRET_ID"]
         except KeyError:
             print("Secret ID not found falling back to auth using github")
-            return
+            return auth_args
     return auth_args
 
 
