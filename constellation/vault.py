@@ -78,9 +78,11 @@ class vault_config:
                     self.auth_args["token"] = get_github_token()
             elif self.auth_method == "approle":
                 if "role_id" not in self.auth_args:
-                    self.auth_args["role_id"] = get_envvar("VAULT_AUTH_ROLE_ID")
+                    self.auth_args["role_id"] = get_envvar(
+                        "VAULT_AUTH_ROLE_ID")
                 if "secret_id" not in self.auth_args:
-                    self.auth_args["secret_id"] = get_envvar("VAULT_AUTH_SECRET_ID")
+                    self.auth_args["secret_id"] = get_envvar(
+                        "VAULT_AUTH_SECRET_ID")
 
             getattr(cl.auth, self.auth_method).login(**self.auth_args)
         return cl
@@ -97,12 +99,14 @@ def get_github_token():
     except KeyError:
         return input("Enter GitHub token for vault: ").strip()
 
+
 def get_envvar(name):
     try:
         return os.environ[name]
     except KeyError:
         raise KeyError("Did not find env var '{}'".format(
             name))
+
 
 def drop_envvar(name):
     if name in os.environ:
