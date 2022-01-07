@@ -93,7 +93,7 @@ def test_vault_config_when_missing():
 # this can be found in the vimc vault as
 # /secret/vimc-robot/github-pat
 #
-# This environment variable is configured on travis
+# This environment variable is configured on GitHub actions
 def test_vault_config_login():
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
