@@ -124,6 +124,50 @@ def test_vault_config_login_no_args():
             assert cfg.client().is_authenticated()
 
 
+def test_vault_config_approle_login():
+    with vault_dev.server() as s:
+        cl = s.client()
+        cl.sys.enable_auth_method(method_type="approle")
+        cl.auth.approle.create_or_update_approle(
+            role_name="test-role"
+        )
+
+        url = "http://localhost:{}".format(s.port)
+        role_id = cl.auth.approle.read_role_id(
+            role_name="test-role"
+        )["data"]["role_id"]
+        secret_id = cl.auth.approle.generate_secret_id(
+            role_name="test-role"
+        )["data"]["secret_id"]
+        with mock.patch.dict(os.environ, {
+            "VAULT_AUTH_ROLE_ID": role_id,
+            "VAULT_AUTH_SECRET_ID": secret_id
+        }):
+            cfg = vault_config(url, "approle", None)
+            assert cfg.client().is_authenticated()
+
+
+def test_vault_config_approle_no_args():
+    with vault_dev.server() as s:
+        cl = s.client()
+        cl.sys.enable_auth_method(method_type="approle")
+        cl.auth.approle.create_or_update_approle(
+            role_name="test-role"
+        )
+
+        url = "http://localhost:{}".format(s.port)
+        role_id = cl.auth.approle.read_role_id(
+            role_name="test-role"
+        )["data"]["role_id"]
+        with mock.patch.dict(os.environ, {
+            "VAULT_AUTH_ROLE_ID": role_id
+        }):
+            cfg = vault_config(url, "approle", None)
+            msg = "Did not find env var 'VAULT_AUTH_SECRET_ID'"
+            with pytest.raises(Exception, match=msg):
+                cfg.client().is_authenticated()
+
+
 # Utility required to work around https://github.com/hvac/hvac/issues/421
 def test_drop_envvar_removes_envvar():
     name = "VAULT_DEV_TEST_VAR"
