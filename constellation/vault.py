@@ -76,6 +76,7 @@ class vault_config:
             if self.auth_method == "approle":
                 self.auth_args = get_approle_auth(self.auth_args)
                 if "role_id" not in self.auth_args or "secret_id" not in self.auth_args:
+                    self.auth_args = {}
                     self.auth_method = "github"
 
             if self.auth_method == "github":
