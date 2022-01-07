@@ -93,7 +93,8 @@ def test_vault_config_when_missing():
 # this can be found in the vimc vault as
 # /secret/vimc-robot/github-pat
 #
-# This environment variable is configured on GitHub actions
+# This environment variable is configured on GitHub actions see usage
+# details https://mrc-ide.myjetbrains.com/youtrack/articles/RESIDE-A-18/Vault#keys
 def test_vault_config_login():
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
