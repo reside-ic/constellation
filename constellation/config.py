@@ -11,6 +11,7 @@ from constellation.util import ImageReference
 def read_yaml(filename):
     with open(filename, "r") as f:
         dat = yaml.load(f, Loader=yaml.SafeLoader)
+    dat = parse_env_vars(dat)
     return dat
 
 
@@ -38,8 +39,6 @@ def config_value(data, path, data_type, is_optional, default=None):
             data = data[p]
             if data is None:
                 raise KeyError()
-            if isinstance(data, str) and re.search("^\\$[0-9A-Z_]+$", data):
-                data = get_envvar(data[1:])
         except KeyError as e:
             if is_optional:
                 return default
@@ -135,6 +134,15 @@ right so that later dictionaries override values in earlier ones"""
         combine(ret, o)
     return ret
 
+
+def parse_env_vars(data):
+    if isinstance(data, (dict, list)):
+        for k, v in (data.items() if isinstance(data, dict) else enumerate(data)):
+            if isinstance(v, (dict, list)):
+                data[k] = parse_env_vars(v)
+            if isinstance(v, str) and re.search("^\\$[0-9A-Z_]+$", v):
+                data[k] = get_envvar(v[1:])
+    return data
 
 def get_envvar(name):
     try:
