@@ -191,7 +191,7 @@ def test_config_build_prevents_changing_container_prefix():
 
 def test_config_read_env_var():
     with mock.patch.dict(os.environ, {"EXAMPLE_ENV_VAR": "value1"}):
-      assert config_string(sample_data, "a") == "value1"
+        assert config_string(sample_data, "f") == "value1"
 
 
 def write_file(contents, path):
