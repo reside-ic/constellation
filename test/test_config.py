@@ -1,9 +1,12 @@
+import os
 import pytest
+
+from unittest import mock
 
 from constellation.config import *
 
 sample_data = {"a": "value1", "b": {"x": "value2"}, "c": 1, "d": True,
-               "e": None}
+               "e": None, "f": "$EXAMPLE_ENV_VAR"}
 
 
 def test_config_string_reads_simple_values():
@@ -184,6 +187,16 @@ def test_config_build_prevents_changing_container_prefix():
             config_build(path, data, "options")
         with pytest.raises(Exception, match=msg):
             config_build(path, data, None, options)
+
+
+def test_config_read_env_var():
+    with mock.patch.dict(os.environ, {"EXAMPLE_ENV_VAR": "value1"}):
+        assert config_string(sample_data, "f") == "value1"
+
+
+def test_config_read_env_var_error():
+    with pytest.raises(KeyError):
+        config_string(sample_data, "f")
 
 
 def write_file(contents, path):
