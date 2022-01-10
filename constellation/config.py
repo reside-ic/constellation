@@ -2,6 +2,7 @@ import copy
 import tempfile
 import yaml
 import re
+import os
 
 import constellation.vault as vault
 from constellation.util import ImageReference
@@ -38,7 +39,7 @@ def config_value(data, path, data_type, is_optional, default=None):
             if data is None:
                 raise KeyError()
             if isinstance(data, str) and re.search("^\\$[0-9A-Z_]+$", data):
-                data = vault.get_envvar(data[1:])
+                data = get_envvar(data[1:])
         except KeyError as e:
             if is_optional:
                 return default
@@ -133,3 +134,11 @@ right so that later dictionaries override values in earlier ones"""
     for o in options:
         combine(ret, o)
     return ret
+
+
+def get_envvar(name):
+    try:
+        return os.environ[name]
+    except KeyError:
+        raise KeyError("Did not find env var '{}'".format(
+            name))
