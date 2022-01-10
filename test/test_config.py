@@ -194,6 +194,11 @@ def test_config_read_env_var():
         assert config_string(sample_data, "f") == "value1"
 
 
+def test_config_read_env_var_error():
+    with pytest.raises(KeyError):
+        config_string(sample_data, "f")
+
+
 def write_file(contents, path):
     with open(path, "w") as f:
         f.write(contents)
