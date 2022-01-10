@@ -151,9 +151,9 @@ def test_read_yaml_parse_env_var():
         f.write(b"a: 1\nb: $ENV_VAR")
         f.seek(0)
         with mock.patch.dict(os.environ, {"ENV_VAR": "test"}):
-          dat = read_yaml(f.name)
-          assert dat["a"] == 1
-          assert dat["b"] == "test"
+            dat = read_yaml(f.name)
+            assert dat["a"] == 1
+            assert dat["b"] == "test"
 
 
 def test_config_read_env_var_error():
@@ -163,6 +163,7 @@ def test_config_read_env_var_error():
         with pytest.raises(KeyError):
             read_yaml(f.name)
             dat = read_yaml(f.name)
+
 
 def test_combine():
     def do_combine(a, b):

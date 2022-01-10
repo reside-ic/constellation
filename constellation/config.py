@@ -137,12 +137,14 @@ right so that later dictionaries override values in earlier ones"""
 
 def parse_env_vars(data):
     if isinstance(data, (dict, list)):
-        for k, v in (data.items() if isinstance(data, dict) else enumerate(data)):
+        for k, v in (data.items() if isinstance(data, dict)
+                     else enumerate(data)):
             if isinstance(v, (dict, list)):
                 data[k] = parse_env_vars(v)
             if isinstance(v, str) and re.search("^\\$[0-9A-Z_]+$", v):
                 data[k] = get_envvar(v[1:])
     return data
+
 
 def get_envvar(name):
     try:
