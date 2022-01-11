@@ -121,6 +121,50 @@ def test_config_vault():
     assert value.auth_args == {"token": "mytoken"}
 
 
+def test_parse_env_vars():
+    data = {
+        "vault": {
+            "addr": "https://example.com/vault",
+            "auth": {
+                "method": "approle",
+                "args": {
+                    "role_id": "$ROLE_ID",
+                    "secret_id": "456"
+                }
+            }
+        },
+        "test": ["one", "$TWO", "three"],
+        "test2": 123
+    }
+    with mock.patch.dict(os.environ, {"ROLE_ID": "id_123", "TWO": "two"}):
+        out = parse_env_vars(data)
+        assert out["vault"]["addr"] == "https://example.com/vault"
+        assert out["vault"]["auth"]["method"] == "approle"
+        assert out["vault"]["auth"]["args"]["role_id"] == "id_123"
+        assert out["vault"]["auth"]["args"]["secret_id"] == "456"
+        assert out["test"] == ["one", "two", "three"]
+        assert out["test2"] == 123
+
+
+def test_read_yaml_parse_env_var():
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(b"a: 1\nb: $ENV_VAR")
+        f.seek(0)
+        with mock.patch.dict(os.environ, {"ENV_VAR": "test"}):
+            dat = read_yaml(f.name)
+            assert dat["a"] == 1
+            assert dat["b"] == "test"
+
+
+def test_config_read_env_var_error():
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(b"a: 1\nb: $ENV_VAR")
+        f.seek(0)
+        with pytest.raises(KeyError):
+            read_yaml(f.name)
+            dat = read_yaml(f.name)
+
+
 def test_combine():
     def do_combine(a, b):
         """lets us use combine with unnamed data"""
@@ -187,16 +231,6 @@ def test_config_build_prevents_changing_container_prefix():
             config_build(path, data, "options")
         with pytest.raises(Exception, match=msg):
             config_build(path, data, None, options)
-
-
-def test_config_read_env_var():
-    with mock.patch.dict(os.environ, {"EXAMPLE_ENV_VAR": "value1"}):
-        assert config_string(sample_data, "f") == "value1"
-
-
-def test_config_read_env_var_error():
-    with pytest.raises(KeyError):
-        config_string(sample_data, "f")
 
 
 def write_file(contents, path):
