@@ -412,3 +412,26 @@ def test_constellation_can_set_entrypoint():
     assert "print this\n" == log
 
     obj.destroy()
+
+
+def test_constellation_can_set_working_dir():
+    """Bring up a container with working dir and verify that it works"""
+    name = "mything"
+    ref = ImageReference("library", "alpine", "latest")
+
+    container = ConstellationContainer(
+        "alpine", ref, entrypoint="ls")
+    container_dir = ConstellationContainer(
+        "alpine2", ref, entrypoint="ls", working_dir="/bin")
+
+    obj = Constellation(
+        name, "prefix", [container, container_dir], "network", None)
+    obj.start()
+
+    log = container.get("prefix").logs().decode("utf-8")
+    log_dir = container_dir.get("prefix").logs().decode("utf-8")
+
+    assert log != log_dir
+    assert "cat" in log_dir
+
+    obj.destroy()
