@@ -37,7 +37,7 @@ class Constellation:
         print("  * Volumes:")
         for v in self.volumes.collection:
             v_status = "created" if docker_util.volume_exists(v.name) \
-                    else "missing"
+                else "missing"
             print("    - {} ({}): {}".format(v.role, v.name, v_status))
         print("  * Containers:")
         for x in self.containers.collection:
@@ -84,8 +84,10 @@ class ConstellationContainer:
     which will expose port 80 (same port on both the container and
     host) and expose port 2222 in the container as 3333 on the host.
     """
+
     def __init__(self, name, image, args=None,
-                 mounts=None, ports=None, environment=None, configure=None):
+                 mounts=None, ports=None, environment=None, configure=None,
+                 entrypoint=None):
         self.name = name
         self.image = image
         self.args = args
@@ -93,6 +95,7 @@ class ConstellationContainer:
         self.ports = container_ports(ports)
         self.environment = environment
         self.configure = configure
+        self.entrypoint = entrypoint
 
     def name_external(self, prefix):
         return "{}_{}".format(prefix, self.name)
@@ -111,7 +114,8 @@ class ConstellationContainer:
         x = cl.containers.run(str(self.image), self.args, name=nm,
                               detach=True,
                               mounts=mounts, network="none", ports=self.ports,
-                              environment=self.environment)
+                              environment=self.environment,
+                              entrypoint=self.entrypoint)
         # There is a bit of a faff here, because I do not see how we
         # can get the container onto the network *and* alias it
         # without having 'create' put it on a network first.  This

@@ -394,3 +394,21 @@ def test_restart_pulls_and_replaces_containers():
     assert obj.containers.get("client", obj.prefix).id != id_client
 
     obj.destroy()
+
+
+def test_constellation_can_set_entrypoint():
+    """Bring up a container with entrypoint and verify that it works"""
+    name = "mything"
+    ref = ImageReference("library", "alpine", "latest")
+
+    container = ConstellationContainer(
+        "alpine", ref, entrypoint="echo", args="print this")
+
+    obj = Constellation(name, "prefix", [container], "network", None)
+    obj.start()
+
+    log = container.get("prefix").logs().decode("utf-8")
+
+    assert "print this\n" == log
+
+    obj.destroy()
