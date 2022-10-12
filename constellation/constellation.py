@@ -87,7 +87,7 @@ class ConstellationContainer:
 
     def __init__(self, name, image, args=None,
                  mounts=None, ports=None, environment=None, configure=None,
-                 entrypoint=None):
+                 entrypoint=None, working_dir=None):
         self.name = name
         self.image = image
         self.args = args
@@ -96,6 +96,7 @@ class ConstellationContainer:
         self.environment = environment
         self.configure = configure
         self.entrypoint = entrypoint
+        self.working_dir = working_dir
 
     def name_external(self, prefix):
         return "{}_{}".format(prefix, self.name)
@@ -115,7 +116,8 @@ class ConstellationContainer:
                               detach=True,
                               mounts=mounts, network="none", ports=self.ports,
                               environment=self.environment,
-                              entrypoint=self.entrypoint)
+                              entrypoint=self.entrypoint,
+                              working_dir=self.working_dir)
         # There is a bit of a faff here, because I do not see how we
         # can get the container onto the network *and* alias it
         # without having 'create' put it on a network first.  This
