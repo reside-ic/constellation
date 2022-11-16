@@ -435,3 +435,24 @@ def test_constellation_can_set_working_dir():
     assert "cat" in log_dir
 
     obj.destroy()
+
+
+def test_constellation_can_set_labels():
+    """Bring up a container with labels and verify that it works"""
+    name = "mything"
+    ref = ImageReference("library", "alpine", "latest")
+
+    labels = {"label1": "value1", "label2": "value2"}
+    container = ConstellationContainer(
+        "alpine", ref, entrypoint="ls")
+    container_label = ConstellationContainer(
+        "alpine2", ref, entrypoint="ls", labels=labels)
+
+    obj = Constellation(
+        name, "prefix", [container, container_label], "network", None)
+    obj.start()
+
+    assert container.get("prefix").labels == {}
+    assert container_label.get("prefix").labels == labels
+
+    obj.destroy()
