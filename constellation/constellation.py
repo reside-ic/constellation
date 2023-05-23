@@ -100,7 +100,7 @@ class ConstellationContainer:
         self.labels = labels
 
     def name_external(self, prefix):
-        return "{}_{}".format(prefix, self.name)
+        return "{}-{}".format(prefix, self.name)
 
     def pull_image(self):
         docker_util.image_pull(self.name, str(self.image))
@@ -179,7 +179,7 @@ class ConstellationService():
     def start(self, prefix, network, volumes, data=None):
         print("Starting *service* {}".format(self.name))
         for i in range(self.scale):
-            name = "{}_{}".format(self.name, rand_str(8))
+            name = "{}-{}".format(self.name, rand_str(8))
             container = ConstellationContainer(name, self.image, **self.kwargs)
             container.start(prefix, network, volumes, data)
 
