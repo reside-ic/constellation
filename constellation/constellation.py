@@ -168,7 +168,7 @@ class ConstellationService():
         self.base = ConstellationContainer(name, image, **kwargs)
 
     def name_external(self, prefix):
-        return "{}_<i>".format(self.base.name_external(prefix))
+        return "{}-<i>".format(self.base.name_external(prefix))
 
     def pull_image(self):
         self.base.pull_image()
@@ -184,7 +184,7 @@ class ConstellationService():
             container.start(prefix, network, volumes, data)
 
     def get(self, prefix, stopped=False):
-        pattern = self.base.name_external(prefix) + "_"
+        pattern = self.base.name_external(prefix) + "-"
         return docker_util.containers_matching(pattern, stopped)
 
     def status(self, prefix):

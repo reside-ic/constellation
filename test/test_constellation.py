@@ -10,7 +10,7 @@ from constellation.constellation import *
 from constellation.util import ImageReference
 
 
-def rand_str(n=10, prefix="constellation_"):
+def rand_str(n=10, prefix="constellation-"):
     return constellation.util.rand_str(n, prefix)
 
 
@@ -302,7 +302,8 @@ def test_scalable_containers():
     with redirect_stdout(f):
         obj.status()
 
-    assert "client_<i>): missing" in f.getvalue()
+    print(f.getvalue())
+    assert "client-<i>): missing" in f.getvalue()
 
     obj.start(pull_images=True)
 
@@ -310,13 +311,13 @@ def test_scalable_containers():
     with redirect_stdout(f):
         obj.status()
 
-    assert "client_<i>): running (4)" in f.getvalue()
+    assert "client-<i>): running (4)" in f.getvalue()
 
     containers = client.get(prefix)
 
     for i in range(4):
         x = containers[i]
-        assert x.name.startswith("{}-client_".format(prefix))
+        assert x.name.startswith("{}-client-".format(prefix))
         response = docker_util.exec_safely(x, ["curl", "http://server"])
         assert "Welcome to nginx" in response.output.decode("UTF-8")
 
