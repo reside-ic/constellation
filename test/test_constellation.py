@@ -10,7 +10,7 @@ from constellation.constellation import *
 from constellation.util import ImageReference
 
 
-def rand_str(n=10, prefix="constellation_"):
+def rand_str(n=10, prefix="constellation-"):
     return constellation.util.rand_str(n, prefix)
 
 
@@ -106,7 +106,7 @@ def test_mount_with_args():
 def test_container_simple():
     nm = rand_str(prefix="")
     x = ConstellationContainer(nm, "library/redis:5.0")
-    assert x.name_external("prefix") == "prefix_{}".format(nm)
+    assert x.name_external("prefix") == "prefix-{}".format(nm)
     assert not x.exists("prefix")
     assert x.get("prefix") is None
     f = io.StringIO()
@@ -179,7 +179,7 @@ def test_container_collection():
     obj.start(prefix, nw, [])
 
     cl = obj.get("client", prefix)
-    assert cl.name == "{}_client".format(prefix)
+    assert cl.name == "{}-client".format(prefix)
     assert obj.exists(prefix) == [True, True]
     obj.stop(prefix)
     obj.remove(prefix)
@@ -214,7 +214,7 @@ def test_constellation():
 
     assert "Network:\n    - thenw: missing" in p
     assert "Volumes:\n    - data (mydata): missing" in p
-    assert "Containers:\n    - server ({}_server): missing".format(prefix) in p
+    assert "Containers:\n    - server ({}-server): missing".format(prefix) in p
 
     obj.start(True)
 
@@ -226,7 +226,7 @@ def test_constellation():
 
     assert "Network:\n    - thenw: created" in p
     assert "Volumes:\n    - data (mydata): created" in p
-    assert "Containers:\n    - server ({}_server): running".format(prefix) in p
+    assert "Containers:\n    - server ({}-server): running".format(prefix) in p
 
     x = obj.containers.get("client", prefix)
     response = docker_util.exec_safely(x, ["curl", "http://server"])
@@ -302,7 +302,8 @@ def test_scalable_containers():
     with redirect_stdout(f):
         obj.status()
 
-    assert "client_<i>): missing" in f.getvalue()
+    print(f.getvalue())
+    assert "client-<i>): missing" in f.getvalue()
 
     obj.start(pull_images=True)
 
@@ -310,13 +311,13 @@ def test_scalable_containers():
     with redirect_stdout(f):
         obj.status()
 
-    assert "client_<i>): running (4)" in f.getvalue()
+    assert "client-<i>): running (4)" in f.getvalue()
 
     containers = client.get(prefix)
 
     for i in range(4):
         x = containers[i]
-        assert x.name.startswith("{}_client_".format(prefix))
+        assert x.name.startswith("{}-client-".format(prefix))
         response = docker_util.exec_safely(x, ["curl", "http://server"])
         assert "Welcome to nginx" in response.output.decode("UTF-8")
 
