@@ -11,7 +11,7 @@ requirements = [
     "vault_dev"]
 
 setup(name="constellation",
-      version="1.0.0",
+      version="1.1.0",
       description="Deploy scripts for constellations of docker containers",
       long_description=long_description,
       classifiers=[
