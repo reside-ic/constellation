@@ -45,6 +45,8 @@ def resolve_secrets_dict(d, client):
             updated, v = resolve_secret(v, client)
             if updated:
                 d[k] = v
+        elif type(v) == dict:
+            resolve_secrets_dict(v, client)
 
 
 class vault_config:
