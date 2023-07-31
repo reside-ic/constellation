@@ -36,9 +36,9 @@ def test_secret_reading_of_dicts_recursive():
         client = s.client()
         client.write("secret/foo", value="s3cret")
         # With data
-        dat = {"foo": {"bar": "VAULT:secret/foo:value"}}
+        dat = {"foo": {"bar": {"fizz": "VAULT:secret/foo:value"}}}
         resolve_secrets(dat, client)
-        assert dat == {"foo": {"bar": "s3cret"}}
+        assert dat == {"foo": {"bar": {"fizz": "s3cret"}}}
         # Without
         empty = {}
         resolve_secrets(empty, client)
@@ -54,11 +54,13 @@ def test_secret_reading_of_objects():
             def __init__(self):
                 self.foo = "VAULT:secret/foo:value"
                 self.bar = "constant"
+                self.fizz = {"secret": "VAULT:secret/foo:value"}
 
         dat = Data()
         resolve_secrets(dat, client)
         assert dat.foo == "s3cret"
         assert dat.bar == "constant"
+        assert dat.fizz == {"secret": "s3cret"}
 
 
 def test_accessor_validation():
