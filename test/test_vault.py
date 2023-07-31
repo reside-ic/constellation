@@ -14,7 +14,7 @@ def test_secret_reading():
         client.write("secret/foo", value="s3cret")
         assert resolve_secret("foo", client) == (False, "foo")
         assert resolve_secret("VAULT:secret/foo:value", client) == \
-            (True, "s3cret")
+               (True, "s3cret")
 
 
 def test_secret_reading_of_dicts():
@@ -25,6 +25,20 @@ def test_secret_reading_of_dicts():
         dat = {"foo": "VAULT:secret/foo:value", "bar": "constant"}
         resolve_secrets(dat, client)
         assert dat == {"foo": "s3cret", "bar": "constant"}
+        # Without
+        empty = {}
+        resolve_secrets(empty, client)
+        assert empty == {}
+
+
+def test_secret_reading_of_dicts_recursive():
+    with vault_dev.server() as s:
+        client = s.client()
+        client.write("secret/foo", value="s3cret")
+        # With data
+        dat = {"foo": {"bar": "VAULT:secret/foo:value"}}
+        resolve_secrets(dat, client)
+        assert dat == {"foo": {"bar": "s3cret"}}
         # Without
         empty = {}
         resolve_secrets(empty, client)
