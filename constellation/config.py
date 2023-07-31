@@ -48,7 +48,8 @@ def config_value(data, path, data_type, is_optional, default=None):
     expected = {"string": str,
                 "integer": int,
                 "boolean": bool,
-                "dict": dict}
+                "dict": dict,
+                "list": list}
     if type(data) is not expected[data_type]:
         raise ValueError("Expected {} for {}".format(
             data_type, ":".join(path)))
@@ -92,6 +93,10 @@ def config_dict_strict(data, path, keys, is_optional=False, default=None):
             raise ValueError("Expected a string for {}".format(
                 ":".join(path + [k])))
     return d
+
+
+def config_list(data, path, is_optional=False, default=None):
+    return config_value(data, path, "list", is_optional, default)
 
 
 def config_enum(data, path, values, is_optional=False, default=None):

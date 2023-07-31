@@ -6,7 +6,7 @@ from unittest import mock
 from constellation.config import *
 
 sample_data = {"a": "value1", "b": {"x": "value2"}, "c": 1, "d": True,
-               "e": None, "f": "$EXAMPLE_ENV_VAR"}
+               "e": None, "f": "$EXAMPLE_ENV_VAR", "g": [1, 2, 3]}
 
 
 def test_config_string_reads_simple_values():
@@ -72,9 +72,13 @@ def test_config_dict_strict_returns_null_if_optional():
     assert config_dict_strict(dat, ["x"], "c", True) is None
 
 
+def test_config_list_returns_list():
+    assert config_list(sample_data, ["g"]) == sample_data["g"]
+
+
 def test_config_enum_returns_string():
     assert config_enum(sample_data, ["b", "x"], ["value1", "value2"]) == \
-        "value2"
+           "value2"
 
 
 def test_config_enum_raises_if_invalid():
@@ -172,13 +176,13 @@ def test_combine():
         return a
 
     assert do_combine({"a": 1}, {"b": 2}) == \
-        {"a": 1, "b": 2}
+           {"a": 1, "b": 2}
     assert do_combine({"a": {"x": 1}, "b": 2}, {"a": {"x": 3}}) == \
-        {"a": {"x": 3}, "b": 2}
+           {"a": {"x": 3}, "b": 2}
     assert do_combine({"a": {"x": 1, "y": 4}, "b": 2}, {"a": {"x": 3}}) == \
-        {"a": {"x": 3, "y": 4}, "b": 2}
+           {"a": {"x": 3, "y": 4}, "b": 2}
     assert do_combine({"a": None, "b": 2}, {"a": {"x": 3}}) == \
-        {"a": {"x": 3}, "b": 2}
+           {"a": {"x": 3}, "b": 2}
 
 
 def test_combine_can_replace_dict():
@@ -211,9 +215,9 @@ def test_config_build_works():
         assert config_build(path, data) == data
         assert config_build(path, data, "options") == {"a": 2, "b": 4, "c": 3}
         assert config_build(path, data, None, options) == \
-            {"a": 3, "b": 2, "c": 9, "x": "y"}
+               {"a": 3, "b": 2, "c": 9, "x": "y"}
         assert config_build(path, data, None, options2) == \
-            {"a": 3, "b": 2, "c": 9, "x": "z"}
+               {"a": 3, "b": 2, "c": 9, "x": "z"}
 
 
 def test_config_build_prevents_changing_container_prefix():
