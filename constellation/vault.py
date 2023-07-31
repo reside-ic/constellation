@@ -37,6 +37,8 @@ def resolve_secrets_object(obj, client):
             updated, v = resolve_secret(v, client)
             if updated:
                 setattr(obj, k, v)
+        if type(v) == dict:
+            resolve_secrets_dict(v, client)
 
 
 def resolve_secrets_dict(d, client):
