@@ -26,6 +26,17 @@ def test_exec_safely_throws_on_failure():
     container.kill()
 
 
+def test_exec_can_pass_kwargs():
+    cl = docker.client.from_env()
+    container = cl.containers.run("alpine", ["sleep", "10"],
+                                  detach=True, auto_remove=True)
+    res = exec_safely(container, "ls", workdir="/bin")
+    out = res.output.decode("UTF-8").strip().split("\n")
+    container.kill()
+    assert res.exit_code == 0
+    assert "ls" in out
+
+
 def test_remove_network_removes_network():
     cl = docker.client.from_env()
     name = "constellation_test_nw"
