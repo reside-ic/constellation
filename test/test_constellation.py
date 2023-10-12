@@ -105,8 +105,7 @@ def test_mount_with_args():
 
 def test_container_simple():
     nm = rand_str(prefix="")
-    image_ref = ImageReference("library", "redis", "6.0")
-    x = ConstellationContainer(nm, image_ref)
+    x = ConstellationContainer(nm, "library/redis:6.0")
     assert x.name_external("prefix") == "prefix-{}".format(nm)
     assert not x.exists("prefix")
     assert x.get("prefix") is None
@@ -120,8 +119,7 @@ def test_container_simple():
 
 def test_container_start_stop_remove():
     nm = rand_str(prefix="")
-    image_ref = ImageReference("library", "redis", "6.0")
-    x = ConstellationContainer(nm, image_ref)
+    x = ConstellationContainer(nm, "library/redis:6.0")
     nw = ConstellationNetwork(rand_str())
     try:
         nw.create()
@@ -142,8 +140,8 @@ def test_container_start_configure():
 
     try:
         nm = rand_str(prefix="")
-        image_ref = ImageReference("library", "redis", "6.0")
-        x = ConstellationContainer(nm, image_ref, configure=configure)
+        x = ConstellationContainer(nm, "library/redis:6.0",
+                                   configure=configure)
         nw = ConstellationNetwork(rand_str())
         nw.create()
         x.start("prefix", nw, None)
@@ -164,12 +162,12 @@ def test_container_pull():
 
 
 def test_container_collection():
-    image_ref = ImageReference("library", "redis", "6.0")
+    ref = "library/redis:6.0"
     prefix = rand_str()
     nw = ConstellationNetwork(rand_str())
     nw.create()
-    x = ConstellationContainer("server", image_ref)
-    y = ConstellationContainer("client", image_ref)
+    x = ConstellationContainer("server", ref)
+    y = ConstellationContainer("client", ref)
     obj = ConstellationContainerCollection([x, y])
 
     assert obj.get("client", prefix) is None
