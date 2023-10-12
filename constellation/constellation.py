@@ -87,8 +87,8 @@ class ConstellationContainer:
 
     def __init__(self, name, image, args=None,
                  mounts=None, ports=None, environment=None, configure=None,
-                 entrypoint=None, working_dir=None, labels=None, preconfigure=None,
-                 network="none"):
+                 entrypoint=None, working_dir=None, labels=None,
+                 preconfigure=None, network="none"):
         self.name = name
         self.image = image
         self.args = args
@@ -117,8 +117,8 @@ class ConstellationContainer:
         print("Starting {} ({})".format(self.name, str(self.image)))
         mounts = [x.to_mount(volumes) for x in self.mounts]
         x = cl.containers.create(str(self.image), self.args, name=nm,
-                                 detach=True,
-                                 mounts=mounts, network=self.network, ports=self.ports,
+                                 detach=True, mounts=mounts,
+                                 network=self.network, ports=self.ports,
                                  environment=self.environment,
                                  entrypoint=self.entrypoint,
                                  working_dir=self.working_dir,
