@@ -31,8 +31,7 @@ jobs:
           python -m pip install --upgrade setuptools pip urllib3==1.26.11 wheel importlib-metadata
           python setup.py install --user
           pip3 install pytest-cov pycodestyle codecov
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+
       - name: Tests
         run: |
           pytest --cov=src
