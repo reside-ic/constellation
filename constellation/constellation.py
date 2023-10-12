@@ -87,7 +87,8 @@ class ConstellationContainer:
 
     def __init__(self, name, image, args=None,
                  mounts=None, ports=None, environment=None, configure=None,
-                 entrypoint=None, working_dir=None, labels=None):
+                 entrypoint=None, working_dir=None, labels=None, preconfigure=None,
+                 network="none"):
         self.name = name
         self.image = image
         self.args = args
@@ -98,6 +99,8 @@ class ConstellationContainer:
         self.entrypoint = entrypoint
         self.working_dir = working_dir
         self.labels = labels
+        self.preconfigure = preconfigure
+        self.network = network
 
     def name_external(self, prefix):
         return "{}-{}".format(prefix, self.name)
@@ -113,13 +116,18 @@ class ConstellationContainer:
         nm = self.name_external(prefix)
         print("Starting {} ({})".format(self.name, str(self.image)))
         mounts = [x.to_mount(volumes) for x in self.mounts]
-        x = cl.containers.run(str(self.image), self.args, name=nm,
-                              detach=True,
-                              mounts=mounts, network="none", ports=self.ports,
-                              environment=self.environment,
-                              entrypoint=self.entrypoint,
-                              working_dir=self.working_dir,
-                              labels=self.labels)
+        x = cl.containers.create(str(self.image), self.args, name=nm,
+                                 detach=True,
+                                 mounts=mounts, network=self.network, ports=self.ports,
+                                 environment=self.environment,
+                                 entrypoint=self.entrypoint,
+                                 working_dir=self.working_dir,
+                                 labels=self.labels)
+        if self.preconfigure:
+            self.preconfigure(x, data)
+
+        x.start()
+
         # There is a bit of a faff here, because I do not see how we
         # can get the container onto the network *and* alias it
         # without having 'create' put it on a network first.  This
@@ -129,8 +137,10 @@ class ConstellationContainer:
         # network with an appropriate alias (the docs suggest using an
         # approch that uses the lower level api but I can't get that
         # working).
-        cl.networks.get("none").disconnect(x)
-        cl.networks.get(network.name).connect(x, aliases=[self.name])
+        if self.network == "none":
+            cl.networks.get("none").disconnect(x)
+            cl.networks.get(network.name).connect(x, aliases=[self.name])
+
         x.reload()
         if self.configure:
             self.configure(x, data)

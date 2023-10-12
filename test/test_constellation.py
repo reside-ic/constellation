@@ -397,6 +397,29 @@ def test_restart_pulls_and_replaces_containers():
     obj.destroy()
 
 
+def test_can_preconfigure_constellation_containers():
+    name = "mything"
+    prefix = rand_str()
+    network = "thenw"
+    volumes = {"data": "mydata"}
+    ref_container = ImageReference("library", "alpine", "latest")
+    arg_container = ["sleep", "1000"]
+
+    def precfg_container(container, data):
+        docker_util.string_into_container("test string", container, "./test.txt")
+
+    def cfg_container(container, data):
+        res = container.exec_run(["cat", "test.txt"])
+        assert res.output.decode("utf-8") == "test string"
+
+    client = ConstellationContainer("client", ref_container, arg_container,
+                                    configure=cfg_container, preconfigure=precfg_container)
+
+    obj = Constellation(name, prefix, [client], network, volumes)
+    obj.start()
+    obj.destroy()
+
+
 def test_constellation_can_set_entrypoint():
     """Bring up a container with entrypoint and verify that it works"""
     name = "mything"
