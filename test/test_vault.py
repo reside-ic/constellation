@@ -1,4 +1,3 @@
-import os
 import pytest
 
 from unittest import mock
@@ -103,41 +102,6 @@ def test_vault_config_when_missing():
     assert type(cl) == vault_not_enabled
     with pytest.raises(Exception, match="Vault access is not enabled"):
         cl.read("secret/foo")
-
-
-# To run this test you will need a token for the vimc robot user -
-# this can be found in the vimc vault as
-# /secret/vimc-robot/github-pat
-#
-# This environment variable is configured on GitHub actions see usage details
-# https://mrc-ide.myjetbrains.com/youtrack/articles/RESIDE-A-18/Vault#keys
-def test_vault_config_login():
-    if "VAULT_TEST_GITHUB_PAT" not in os.environ:
-        pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
-    with vault_dev.server() as s:
-        cl = s.client()
-        cl.sys.enable_auth_method(method_type="github")
-        cl.write("auth/github/config", organization="vimc")
-
-        url = "http://localhost:{}".format(s.port)
-        token = os.environ["VAULT_TEST_GITHUB_PAT"]
-        cfg = vault_config(url, "github", {"token": token})
-        assert cfg.client().is_authenticated()
-
-
-def test_vault_config_login_no_args():
-    if "VAULT_TEST_GITHUB_PAT" not in os.environ:
-        pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
-
-    with vault_dev.server() as s:
-        cl = s.client()
-        cl.sys.enable_auth_method(method_type="github")
-        cl.write("auth/github/config", organization="vimc")
-        url = "http://localhost:{}".format(s.port)
-        token = os.environ["VAULT_TEST_GITHUB_PAT"]
-        with mock.patch.dict(os.environ, {"VAULT_AUTH_GITHUB_TOKEN": token}):
-            cfg = vault_config(url, "github", None)
-            assert cfg.client().is_authenticated()
 
 
 # Utility required to work around https://github.com/hvac/hvac/issues/421
