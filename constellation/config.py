@@ -22,7 +22,7 @@ def config_build(path, data, extra=None, options=None):
         config_check_additional(data_extra)
         combine(data, data_extra)
     if options:
-        if type(options) == list:
+        if isinstance(options, list):
             options = collapse(options)
         config_check_additional(options)
         combine(data, options)

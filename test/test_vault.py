@@ -99,7 +99,7 @@ def test_vault_config():
 def test_vault_config_when_missing():
     cfg = vault_config(None, "token", {"token": "root"})
     cl = cfg.client()
-    assert type(cl) == vault_not_enabled
+    assert isinstance(cl, vault_not_enabled)
     with pytest.raises(Exception, match="Vault access is not enabled"):
         cl.read("secret/foo")
 
