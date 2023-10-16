@@ -116,7 +116,6 @@ class ConstellationContainer:
         nm = self.name_external(prefix)
         print("Starting {} ({})".format(self.name, str(self.image)))
         mounts = [x.to_mount(volumes) for x in self.mounts]
-        cl.images.pull(str(self.image))
         x = cl.containers.create(str(self.image), self.args, name=nm,
                                  detach=True, mounts=mounts,
                                  network=self.network, ports=self.ports,

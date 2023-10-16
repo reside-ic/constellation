@@ -105,6 +105,8 @@ def test_mount_with_args():
 
 def test_container_simple():
     nm = rand_str(prefix="")
+    cl = docker.client.from_env()
+    cl.images.pull("library/redis:5.0")
     x = ConstellationContainer(nm, "library/redis:5.0")
     assert x.name_external("prefix") == "prefix-{}".format(nm)
     assert not x.exists("prefix")
@@ -119,6 +121,8 @@ def test_container_simple():
 
 def test_container_start_stop_remove():
     nm = rand_str(prefix="")
+    cl = docker.client.from_env()
+    cl.images.pull("library/redis:5.0")
     x = ConstellationContainer(nm, "library/redis:5.0")
     nw = ConstellationNetwork(rand_str())
     try:
@@ -140,6 +144,8 @@ def test_container_start_configure():
 
     try:
         nm = rand_str(prefix="")
+        cl = docker.client.from_env()
+        cl.images.pull("library/redis:5.0")
         x = ConstellationContainer(nm, "library/redis:5.0",
                                    configure=configure)
         nw = ConstellationNetwork(rand_str())
@@ -166,6 +172,8 @@ def test_container_collection():
     prefix = rand_str()
     nw = ConstellationNetwork(rand_str())
     nw.create()
+    cl = docker.client.from_env()
+    cl.images.pull("library/redis:5.0")
     x = ConstellationContainer("server", ref)
     y = ConstellationContainer("client", ref)
     obj = ConstellationContainerCollection([x, y])
