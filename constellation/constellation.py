@@ -93,7 +93,8 @@ class ConstellationContainer:
         self.image = image
         self.args = args
         self.mounts = mounts or []
-        self.ports = container_ports(ports)
+        self.ports_config = port_config(ports)
+        self.container_ports = container_ports(self.ports_config)
         self.environment = environment
         self.configure = configure
         self.entrypoint = entrypoint
@@ -116,32 +117,29 @@ class ConstellationContainer:
         nm = self.name_external(prefix)
         print("Starting {} ({})".format(self.name, str(self.image)))
         mounts = [x.to_mount(volumes) for x in self.mounts]
-        x = cl.containers.create(str(self.image), self.args, name=nm,
-                                 detach=True, mounts=mounts,
-                                 network=self.network, ports=self.ports,
-                                 environment=self.environment,
-                                 entrypoint=self.entrypoint,
-                                 working_dir=self.working_dir,
-                                 labels=self.labels)
+        if self.ports_config:
+            # don't have to specify TCP vs UDP here because TCP is the default
+            host_config = cl.api.create_host_config(mounts=mounts, port_bindings=self.ports_config)
+        else:
+            host_config = cl.api.create_host_config(mounts=mounts)
+        networking_config = cl.api.create_networking_config({
+            f"{network.name or self.network}": cl.api.create_endpoint_config(aliases=[self.name])
+        })
+        x_obj = cl.api.create_container(str(self.image), self.args, name=nm,
+                                        detach=True, ports=self.container_ports,
+                                        environment=self.environment,
+                                        entrypoint=self.entrypoint,
+                                        working_dir=self.working_dir,
+                                        labels=self.labels, host_config=host_config,
+                                        networking_config=networking_config)
+        container_id = x_obj["Id"]
+        x = cl.containers.get(container_id)
+
         if self.preconfigure:
             self.preconfigure(x, data)
 
         x.start()
 
-        # There is a bit of a faff here, because I do not see how we
-        # can get the container onto the network *and* alias it
-        # without having 'create' put it on a network first.  This
-        # must be possible, but the SDK docs are a bit vague on the
-        # topic.  So we create the container on the 'none' network,
-        # then disconnect it from that network, then attach it to our
-        # network with an appropriate alias (the docs suggest using an
-        # approch that uses the lower level api but I can't get that
-        # working).
-        if self.network == "none":
-            cl.networks.get("none").disconnect(x)
-            cl.networks.get(network.name).connect(x, aliases=[self.name])
-
-        x.reload()
         if self.configure:
             self.configure(x, data)
 
@@ -315,13 +313,20 @@ class ConstellationMount:
                                   **self.kwargs)
 
 
+def int_into_tuple(i):
+    if isinstance(i, int):
+        return i, i
+    return i
+
+
+def port_config(ports):
+    if not ports:
+        return None
+    tuple_ports = [int_into_tuple(p) for p in ports]
+    return {k: v for k, v in tuple_ports}
+
+
 def container_ports(ports):
     if not ports:
         return None
-    ret = {}
-    for p in ports:
-        if type(p) is int:
-            p = (p, p)
-        p_container, p_host = p
-        ret["{}/tcp".format(p_container)] = p_host
-    return ret
+    return list(ports.keys())

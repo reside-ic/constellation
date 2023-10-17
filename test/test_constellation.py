@@ -14,12 +14,18 @@ def rand_str(n=10, prefix="constellation-"):
     return constellation.util.rand_str(n, prefix)
 
 
-def test_container_ports_creates_ports_dictionary():
-    assert container_ports([]) is None
+def test_ports_create_port_config_and_container_ports():
+    assert port_config([]) is None
+    assert port_config(None) is None
+    assert port_config([80]) == {80: 80}
+    assert port_config([80, 443]) == {80: 80, 443: 443}
+    assert port_config([(5432, 15432)]) == {5432: 15432}
+    assert port_config([(5432, 15432), 1]) == {5432: 15432, 1: 1}
+
     assert container_ports(None) is None
-    assert container_ports([80]) == {"80/tcp": 80}
-    assert container_ports([80, 443]) == {"80/tcp": 80, "443/tcp": 443}
-    assert container_ports([(5432, 15432)]) == {"5432/tcp": 15432}
+    assert container_ports({80: 80}) == [80]
+    assert container_ports({80: 80, 443: 443}) == [80, 443]
+    assert container_ports({1: 2, 3: 4, 5: 5}) == [1, 3, 5]
 
 
 def test_network():
