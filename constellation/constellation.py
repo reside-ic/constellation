@@ -117,20 +117,27 @@ class ConstellationContainer:
         nm = self.name_external(prefix)
         print("Starting {} ({})".format(self.name, str(self.image)))
         mounts = [x.to_mount(volumes) for x in self.mounts]
+
         if self.ports_config:
             # don't have to specify TCP vs UDP here because TCP is the default
-            host_config = cl.api.create_host_config(mounts=mounts, port_bindings=self.ports_config)
+            host_config = cl.api.create_host_config(
+                mounts=mounts,
+                port_bindings=self.ports_config
+            )
         else:
             host_config = cl.api.create_host_config(mounts=mounts)
+
+        endpoint_config = cl.api.create_endpoint_config(aliases=[self.name])
         networking_config = cl.api.create_networking_config({
-            f"{network.name or self.network}": cl.api.create_endpoint_config(aliases=[self.name])
+            f"{network.name}": endpoint_config
         })
         x_obj = cl.api.create_container(str(self.image), self.args, name=nm,
-                                        detach=True, ports=self.container_ports,
+                                        detach=True, labels=self.labels,
+                                        ports=self.container_ports,
                                         environment=self.environment,
                                         entrypoint=self.entrypoint,
                                         working_dir=self.working_dir,
-                                        labels=self.labels, host_config=host_config,
+                                        host_config=host_config,
                                         networking_config=networking_config)
         container_id = x_obj["Id"]
         x = cl.containers.get(container_id)
