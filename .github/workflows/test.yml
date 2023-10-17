@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VAULT_TEST_GITHUB_PAT: ${{ secrets.VAULT_TEST_GITHUB_PAT }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v2
 
@@ -41,4 +42,4 @@ jobs:
           pycodestyle . --exclude=.eggs
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
