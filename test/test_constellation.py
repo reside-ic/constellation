@@ -164,6 +164,26 @@ def test_container_start_configure():
         nw.remove()
 
 
+def test_container_ports():
+    try:
+        nm = rand_str(prefix="")
+        cl = docker.client.from_env()
+        cl.images.pull("library/alpine:latest")
+        x = ConstellationContainer(nm, "library/alpine:latest",
+                                   ports=[80, (3000, 8080)])
+        nw = ConstellationNetwork(rand_str())
+        nw.create()
+        x.start("prefix", nw, None)
+        port_bindings = cl.api.inspect_container(f"prefix-{nm}")["HostConfig"]["PortBindings"]
+        assert port_bindings == {
+            "80/tcp": [{"HostIp": "", "HostPort": "80"}],
+            "3000/tcp": [{"HostIp": "", "HostPort": "8080"}],
+        }
+    finally:
+        x.stop("prefix", True)
+        nw.remove()
+
+
 def test_container_pull():
     ref = "library/hello-world:latest"
     x = ConstellationContainer("hello", ref)
