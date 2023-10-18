@@ -174,7 +174,8 @@ def test_container_ports():
         nw = ConstellationNetwork(rand_str())
         nw.create()
         x.start("prefix", nw, None)
-        port_bindings = cl.api.inspect_container(f"prefix-{nm}")["HostConfig"]["PortBindings"]
+        container_config = cl.api.inspect_container(f"prefix-{nm}")
+        port_bindings = container_config["HostConfig"]["PortBindings"]
         assert port_bindings == {
             "80/tcp": [{"HostIp": "", "HostPort": "80"}],
             "3000/tcp": [{"HostIp": "", "HostPort": "8080"}],
