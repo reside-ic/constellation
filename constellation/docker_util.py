@@ -148,7 +148,7 @@ def simple_tar(path, name):
 
 
 def simple_tar_string(text, name):
-    if type(text) == str:
+    if isinstance(text, str):
         text = bytes(text, "utf-8")
     try:
         fd, tmp = tempfile.mkstemp(text=True)

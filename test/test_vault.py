@@ -1,4 +1,3 @@
-import os
 import pytest
 
 from unittest import mock
@@ -100,7 +99,7 @@ def test_vault_config():
 def test_vault_config_when_missing():
     cfg = vault_config(None, "token", {"token": "root"})
     cl = cfg.client()
-    assert type(cl) == vault_not_enabled
+    assert isinstance(cl, vault_not_enabled)
     with pytest.raises(Exception, match="Vault access is not enabled"):
         cl.read("secret/foo")
 
@@ -112,6 +111,10 @@ def test_vault_config_when_missing():
 # This environment variable is configured on GitHub actions see usage details
 # https://mrc-ide.myjetbrains.com/youtrack/articles/RESIDE-A-18/Vault#keys
 def test_vault_config_login():
+    pytest.skip("Skipping test temporary, ticket to resolve this:"
+                + "https://mrc-ide.myjetbrains.com/youtrack/issue"
+                + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication")
+
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
     with vault_dev.server() as s:
@@ -126,6 +129,10 @@ def test_vault_config_login():
 
 
 def test_vault_config_login_no_args():
+    pytest.skip("Skipping test temporary, ticket to resolve this:"
+                + "https://mrc-ide.myjetbrains.com/youtrack/issue"
+                + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication")
+
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
 

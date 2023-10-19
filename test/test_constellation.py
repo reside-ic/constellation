@@ -105,6 +105,8 @@ def test_mount_with_args():
 
 def test_container_simple():
     nm = rand_str(prefix="")
+    cl = docker.client.from_env()
+    cl.images.pull("library/redis:5.0")
     x = ConstellationContainer(nm, "library/redis:5.0")
     assert x.name_external("prefix") == "prefix-{}".format(nm)
     assert not x.exists("prefix")
@@ -119,6 +121,8 @@ def test_container_simple():
 
 def test_container_start_stop_remove():
     nm = rand_str(prefix="")
+    cl = docker.client.from_env()
+    cl.images.pull("library/redis:5.0")
     x = ConstellationContainer(nm, "library/redis:5.0")
     nw = ConstellationNetwork(rand_str())
     try:
@@ -140,6 +144,8 @@ def test_container_start_configure():
 
     try:
         nm = rand_str(prefix="")
+        cl = docker.client.from_env()
+        cl.images.pull("library/redis:5.0")
         x = ConstellationContainer(nm, "library/redis:5.0",
                                    configure=configure)
         nw = ConstellationNetwork(rand_str())
@@ -166,6 +172,8 @@ def test_container_collection():
     prefix = rand_str()
     nw = ConstellationNetwork(rand_str())
     nw.create()
+    cl = docker.client.from_env()
+    cl.images.pull("library/redis:5.0")
     x = ConstellationContainer("server", ref)
     y = ConstellationContainer("client", ref)
     obj = ConstellationContainerCollection([x, y])
@@ -394,6 +402,31 @@ def test_restart_pulls_and_replaces_containers():
     assert obj.containers.get("server", obj.prefix).id != id_server
     assert obj.containers.get("client", obj.prefix).id != id_client
 
+    obj.destroy()
+
+
+def test_can_preconfigure_constellation_containers():
+    name = "mything"
+    prefix = rand_str()
+    network = "thenw"
+    volumes = {"data": "mydata"}
+    ref_container = ImageReference("library", "alpine", "latest")
+    arg_container = ["sleep", "1000"]
+
+    def precfg_container(container, data):
+        docker_util.string_into_container("test string", container,
+                                          "./test.txt")
+
+    def cfg_container(container, data):
+        res = container.exec_run(["cat", "test.txt"])
+        assert res.output.decode("utf-8") == "test string"
+
+    client = ConstellationContainer("client", ref_container,
+                                    arg_container, configure=cfg_container,
+                                    preconfigure=precfg_container)
+
+    obj = Constellation(name, prefix, [client], network, volumes)
+    obj.start()
     obj.destroy()
 
 

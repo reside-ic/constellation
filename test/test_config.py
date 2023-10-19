@@ -119,7 +119,7 @@ def test_config_vault():
         }
     }
     value = config_vault(data, ["vault"])
-    assert type(value) == vault.vault_config
+    assert isinstance(value, vault.vault_config)
     assert value.url == "https://example.com/vault"
     assert value.auth_method == "github"
     assert value.auth_args == {"token": "mytoken"}
