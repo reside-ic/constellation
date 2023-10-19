@@ -14,12 +14,18 @@ def rand_str(n=10, prefix="constellation-"):
     return constellation.util.rand_str(n, prefix)
 
 
-def test_container_ports_creates_ports_dictionary():
-    assert container_ports([]) is None
+def test_ports_create_port_config_and_container_ports():
+    assert port_config([]) is None
+    assert port_config(None) is None
+    assert port_config([80]) == {80: 80}
+    assert port_config([80, 443]) == {80: 80, 443: 443}
+    assert port_config([(5432, 15432)]) == {5432: 15432}
+    assert port_config([(5432, 15432), 1]) == {5432: 15432, 1: 1}
+
     assert container_ports(None) is None
-    assert container_ports([80]) == {"80/tcp": 80}
-    assert container_ports([80, 443]) == {"80/tcp": 80, "443/tcp": 443}
-    assert container_ports([(5432, 15432)]) == {"5432/tcp": 15432}
+    assert container_ports({80: 80}) == [80]
+    assert container_ports({80: 80, 443: 443}) == [80, 443]
+    assert container_ports({1: 2, 3: 4, 5: 5}) == [1, 3, 5]
 
 
 def test_network():
@@ -153,6 +159,27 @@ def test_container_start_configure():
         x.start("prefix", nw, None)
         s = docker_util.string_from_container(x.get("prefix"), "/hello")
         assert s == "hello\n"
+    finally:
+        x.stop("prefix", True)
+        nw.remove()
+
+
+def test_container_ports():
+    try:
+        nm = rand_str(prefix="")
+        cl = docker.client.from_env()
+        cl.images.pull("library/alpine:latest")
+        x = ConstellationContainer(nm, "library/alpine:latest",
+                                   ports=[80, (3000, 8080)])
+        nw = ConstellationNetwork(rand_str())
+        nw.create()
+        x.start("prefix", nw, None)
+        container_config = cl.api.inspect_container(f"prefix-{nm}")
+        port_bindings = container_config["HostConfig"]["PortBindings"]
+        assert port_bindings == {
+            "80/tcp": [{"HostIp": "", "HostPort": "80"}],
+            "3000/tcp": [{"HostIp": "", "HostPort": "8080"}],
+        }
     finally:
         x.stop("prefix", True)
         nw.remove()
