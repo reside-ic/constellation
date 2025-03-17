@@ -5,10 +5,6 @@
 
 ## Installation
 
-From local sources
-
 ```
-python3 setup.py install --user
+pip install constellation
 ```
-
-(you may need `--upgrade` to upgrade older versions of python packages).
