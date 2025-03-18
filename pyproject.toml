@@ -48,7 +48,7 @@ dependencies = [
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
-test-cov = "coverage run -m pytest {args:tests} --run-all"
+test-cov = "coverage run -m pytest {args:tests}"
 cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=hipercow --cov=tests {args}"
 no-cov = "cov --no-cov {args}"
 cov-report-xml = [
