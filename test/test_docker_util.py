@@ -10,8 +10,9 @@ from constellation.docker_util import *
 
 def test_exec_returns_output():
     cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "10"],
-                                  detach=True, auto_remove=True)
+    container = cl.containers.run(
+        "alpine", ["sleep", "10"], detach=True, auto_remove=True
+    )
     res = exec_safely(container, "ls")
     container.kill()
     assert res.exit_code == 0
@@ -19,8 +20,9 @@ def test_exec_returns_output():
 
 def test_exec_safely_throws_on_failure():
     cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "10"],
-                                  detach=True, auto_remove=True)
+    container = cl.containers.run(
+        "alpine", ["sleep", "10"], detach=True, auto_remove=True
+    )
     with pytest.raises(Exception):
         exec_safely(container, "missing_command")
     container.kill()
@@ -28,8 +30,9 @@ def test_exec_safely_throws_on_failure():
 
 def test_exec_can_pass_kwargs():
     cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "10"],
-                                  detach=True, auto_remove=True)
+    container = cl.containers.run(
+        "alpine", ["sleep", "10"], detach=True, auto_remove=True
+    )
     res = exec_safely(container, "ls", workdir="/bin")
     out = res.output.decode("UTF-8").strip().split("\n")
     container.kill()
@@ -89,8 +92,9 @@ def test_remove_volume_is_silent_for_missing_volumes():
 
 def test_string_into_container():
     cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "20"],
-                                  detach=True, auto_remove=True)
+    container = cl.containers.run(
+        "alpine", ["sleep", "20"], detach=True, auto_remove=True
+    )
     text = "a\nb\nc\n"
     string_into_container(text, container, "/test")
     out = container.exec_run(["cat", "/test"])
@@ -103,8 +107,9 @@ def test_string_into_container():
 
 def test_string_into_container_allows_bytes():
     cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "20"],
-                                  detach=True, auto_remove=True)
+    container = cl.containers.run(
+        "alpine", ["sleep", "20"], detach=True, auto_remove=True
+    )
     text = bytes(range(255))
     string_into_container(text, container, "/test")
     out = container.exec_run(["cat", "/test"])
@@ -118,8 +123,9 @@ def test_string_into_container_allows_bytes():
 
 def test_file_into_container():
     cl = docker.client.from_env()
-    container = cl.containers.run("alpine", ["sleep", "20"],
-                                  detach=True, auto_remove=True)
+    container = cl.containers.run(
+        "alpine", ["sleep", "20"], detach=True, auto_remove=True
+    )
     # part of a PNG - doesn't really matter, so long as it's binary:
     content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
     with tempfile.NamedTemporaryFile() as f:
@@ -143,8 +149,7 @@ def test_container_wait_running_detects_start_failure():
 def test_container_wait_running_detects_slow_failure():
     cl = docker.client.from_env()
     with pytest.raises(Exception, match="was running but is now exited"):
-        container = cl.containers.run("alpine", ["sleep", "1"],
-                                      detach=True)
+        container = cl.containers.run("alpine", ["sleep", "1"], detach=True)
         container_wait_running(container, 0.1, 1.2)
 
 

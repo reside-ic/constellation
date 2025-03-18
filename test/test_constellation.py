@@ -105,8 +105,7 @@ def test_mount_with_args():
     assert m.name == "role1"
     assert m.path == "path"
     assert m.kwargs == {"read_only": True}
-    assert m.to_mount(vols) == docker.types.Mount("path", name1,
-                                                  read_only=True)
+    assert m.to_mount(vols) == docker.types.Mount("path", name1, read_only=True)
 
 
 def test_container_simple():
@@ -152,8 +151,7 @@ def test_container_start_configure():
         nm = rand_str(prefix="")
         cl = docker.client.from_env()
         cl.images.pull("library/redis:5.0")
-        x = ConstellationContainer(nm, "library/redis:5.0",
-                                   configure=configure)
+        x = ConstellationContainer(nm, "library/redis:5.0", configure=configure)
         nw = ConstellationNetwork(rand_str())
         nw.create()
         x.start("prefix", nw, None)
@@ -169,8 +167,9 @@ def test_container_ports():
         nm = rand_str(prefix="")
         cl = docker.client.from_env()
         cl.images.pull("library/alpine:latest")
-        x = ConstellationContainer(nm, "library/alpine:latest",
-                                   ports=[80, (3000, 8080)])
+        x = ConstellationContainer(
+            nm, "library/alpine:latest", ports=[80, (3000, 8080)]
+        )
         nw = ConstellationNetwork(rand_str())
         nw.create()
         x.start("prefix", nw, None)
@@ -236,8 +235,9 @@ def test_constellation():
         assert res.exit_code == 0
 
     server = ConstellationContainer("server", ref_server)
-    client = ConstellationContainer("client", ref_client, arg_client,
-                                    configure=cfg_client)
+    client = ConstellationContainer(
+        "client", ref_client, arg_client, configure=cfg_client
+    )
 
     obj = Constellation(name, prefix, [server, client], network, volumes)
 
@@ -291,22 +291,33 @@ def test_constellation_fetches_secrets_on_startup():
 
         def cfg_server(container, data):
             res = docker_util.string_into_container(
-                data["string"], container, "/config")
+                data["string"], container, "/config"
+            )
 
         def cfg_client(container, data):
             res = container.exec_run(["apk", "add", "--no-cache", "curl"])
             assert res.exit_code == 0
 
-        vault_config = vault.vault_config(vault_client.url, "token",
-                                          {"token": s.token})
+        vault_config = vault.vault_config(
+            vault_client.url, "token", {"token": s.token}
+        )
 
-        server = ConstellationContainer("server", ref_server,
-                                        configure=cfg_server)
-        client = ConstellationContainer("client", ref_client, arg_client,
-                                        configure=cfg_client)
+        server = ConstellationContainer(
+            "server", ref_server, configure=cfg_server
+        )
+        client = ConstellationContainer(
+            "client", ref_client, arg_client, configure=cfg_client
+        )
 
-        obj = Constellation(name, prefix, [server, client], network, volumes,
-                            data=data, vault_config=vault_config)
+        obj = Constellation(
+            name,
+            prefix,
+            [server, client],
+            network,
+            volumes,
+            data=data,
+            vault_config=vault_config,
+        )
 
         obj.start()
         x = obj.containers.get("server", prefix)
@@ -329,8 +340,9 @@ def test_scalable_containers():
         assert res.exit_code == 0
 
     server = ConstellationContainer("server", ref_server)
-    client = ConstellationService("client", ref_client, 4, args=arg_client,
-                                  configure=cfg_client)
+    client = ConstellationService(
+        "client", ref_client, 4, args=arg_client, configure=cfg_client
+    )
 
     obj = Constellation(name, prefix, [server, client], network, volumes)
     f = io.StringIO()
@@ -373,8 +385,9 @@ def test_start_subset():
         assert res.exit_code == 0
 
     server = ConstellationContainer("server", ref_server)
-    client = ConstellationContainer("client", ref_client, arg_client,
-                                    configure=cfg_client)
+    client = ConstellationContainer(
+        "client", ref_client, arg_client, configure=cfg_client
+    )
 
     obj = Constellation(name, prefix, [server, client], network, volumes)
     obj.start(subset=["server"])
@@ -401,8 +414,9 @@ def test_restart_pulls_and_replaces_containers():
         assert res.exit_code == 0
 
     server = ConstellationContainer("server", ref_server)
-    client = ConstellationContainer("client", ref_client, arg_client,
-                                    configure=cfg_client)
+    client = ConstellationContainer(
+        "client", ref_client, arg_client, configure=cfg_client
+    )
 
     obj = Constellation(name, prefix, [server, client], network, volumes)
     obj.start()
@@ -424,7 +438,8 @@ def test_restart_pulls_and_replaces_containers():
         "Removing 'server'",
         "Removing 'client'",
         'Starting server (library/nginx:latest)',
-        'Starting client (library/alpine:latest)']
+        'Starting client (library/alpine:latest)',
+    ]
 
     assert obj.containers.get("server", obj.prefix).id != id_server
     assert obj.containers.get("client", obj.prefix).id != id_client
@@ -441,16 +456,21 @@ def test_can_preconfigure_constellation_containers():
     arg_container = ["sleep", "1000"]
 
     def precfg_container(container, data):
-        docker_util.string_into_container("test string", container,
-                                          "./test.txt")
+        docker_util.string_into_container(
+            "test string", container, "./test.txt"
+        )
 
     def cfg_container(container, data):
         res = container.exec_run(["cat", "test.txt"])
         assert res.output.decode("utf-8") == "test string"
 
-    client = ConstellationContainer("client", ref_container,
-                                    arg_container, configure=cfg_container,
-                                    preconfigure=precfg_container)
+    client = ConstellationContainer(
+        "client",
+        ref_container,
+        arg_container,
+        configure=cfg_container,
+        preconfigure=precfg_container,
+    )
 
     obj = Constellation(name, prefix, [client], network, volumes)
     obj.start()
@@ -463,7 +483,8 @@ def test_constellation_can_set_entrypoint():
     ref = ImageReference("library", "alpine", "latest")
 
     container = ConstellationContainer(
-        "alpine", ref, entrypoint="echo", args="print this")
+        "alpine", ref, entrypoint="echo", args="print this"
+    )
 
     obj = Constellation(name, "prefix", [container], "network", None)
     obj.start()
@@ -480,13 +501,14 @@ def test_constellation_can_set_working_dir():
     name = "mything"
     ref = ImageReference("library", "alpine", "latest")
 
-    container = ConstellationContainer(
-        "alpine", ref, entrypoint="ls")
+    container = ConstellationContainer("alpine", ref, entrypoint="ls")
     container_dir = ConstellationContainer(
-        "alpine2", ref, entrypoint="ls", working_dir="/bin")
+        "alpine2", ref, entrypoint="ls", working_dir="/bin"
+    )
 
     obj = Constellation(
-        name, "prefix", [container, container_dir], "network", None)
+        name, "prefix", [container, container_dir], "network", None
+    )
     obj.start()
 
     log = container.get("prefix").logs().decode("utf-8")
@@ -504,13 +526,14 @@ def test_constellation_can_set_labels():
     ref = ImageReference("library", "alpine", "latest")
 
     labels = {"label1": "value1", "label2": "value2"}
-    container = ConstellationContainer(
-        "alpine", ref, entrypoint="ls")
+    container = ConstellationContainer("alpine", ref, entrypoint="ls")
     container_label = ConstellationContainer(
-        "alpine2", ref, entrypoint="ls", labels=labels)
+        "alpine2", ref, entrypoint="ls", labels=labels
+    )
 
     obj = Constellation(
-        name, "prefix", [container, container_label], "network", None)
+        name, "prefix", [container, container_label], "network", None
+    )
     obj.start()
 
     assert container.get("prefix").labels == {}

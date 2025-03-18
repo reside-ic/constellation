@@ -36,11 +36,9 @@ def exec_safely(container, args, **kwargs):
 def return_logs_and_remove(image, args=None, mounts=None):
     client = docker.client.from_env()
     try:
-        result = client.containers.run(image,
-                                       args,
-                                       mounts=mounts,
-                                       stderr=True,
-                                       remove=True)
+        result = client.containers.run(
+            image, args, mounts=mounts, stderr=True, remove=True
+        )
     except docker.errors.ContainerError as e:
         result = e.stderr
     return result.decode("UTF-8")
@@ -110,13 +108,19 @@ def container_wait_running(container, poll=0.1, timeout=1):
         time.sleep(poll)
         container.reload()
     if container.status != "running":
-        raise Exception("container '{}' ({}) is not running ({})".format(
-            container.name, container.id[:8], container.status))
+        raise Exception(
+            "container '{}' ({}) is not running ({})".format(
+                container.name, container.id[:8], container.status
+            )
+        )
     time.sleep(timeout)
     container.reload()
     if container.status != "running":
-        raise Exception("container '{}' ({}) was running but is now {}".format(
-            container.name, container.id[:8], container.status))
+        raise Exception(
+            "container '{}' ({}) was running but is now {}".format(
+                container.name, container.id[:8], container.status
+            )
+        )
     return container
 
 
@@ -215,8 +219,7 @@ def image_pull(name, ref):
 
 def containers_matching(prefix, stopped):
     cl = docker.client.from_env()
-    return [x for x in cl.containers.list(stopped)
-            if x.name.startswith(prefix)]
+    return [x for x in cl.containers.list(stopped) if x.name.startswith(prefix)]
 
 
 class ignoring_missing:
