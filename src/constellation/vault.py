@@ -17,8 +17,9 @@ def resolve_secret(value, client):
         raise Exception("Did not find secret at '{}'".format(path))
 
     if key not in data["data"]:
-        raise Exception("Did not find key '{}' at secret path '{}'".format(
-            key, path))
+        raise Exception(
+            "Did not find key '{}' at secret path '{}'".format(key, path)
+        )
     return True, data["data"][key]
 
 
@@ -42,7 +43,10 @@ def resolve_secrets_object(obj, client):
 
 
 def resolve_secrets_dict(d, client):
-    for k, v, in d.items():
+    for (
+        k,
+        v,
+    ) in d.items():
         if isinstance(v, str):
             updated, v = resolve_secret(v, client)
             if updated:
@@ -71,8 +75,11 @@ class vault_config:
             cl = hvac.Client(url=self.url, token=self.auth_args["token"])
         else:
             cl = hvac.Client(url=self.url)
-            print("Authenticating with the vault using '{}'".format(
-                self.auth_method))
+            print(
+                "Authenticating with the vault using '{}'".format(
+                    self.auth_method
+                )
+            )
 
             if self.auth_method == "github":
                 if not self.auth_args:

@@ -5,8 +5,15 @@ from unittest import mock
 
 from constellation.config import *
 
-sample_data = {"a": "value1", "b": {"x": "value2"}, "c": 1, "d": True,
-               "e": None, "f": "$EXAMPLE_ENV_VAR", "g": [1, 2, 3]}
+sample_data = {
+    "a": "value1",
+    "b": {"x": "value2"},
+    "c": 1,
+    "d": True,
+    "e": None,
+    "f": "$EXAMPLE_ENV_VAR",
+    "g": [1, 2, 3],
+}
 
 
 def test_config_string_reads_simple_values():
@@ -77,19 +84,22 @@ def test_config_list_returns_list():
 
 
 def test_config_enum_returns_string():
-    assert config_enum(sample_data, ["b", "x"], ["value1", "value2"]) == \
-           "value2"
+    assert (
+        config_enum(sample_data, ["b", "x"], ["value1", "value2"]) == "value2"
+    )
 
 
 def test_config_enum_raises_if_invalid():
-    with pytest.raises(ValueError,
-                       match=r"Expected one of \[enum1, enum2\] for b:x"):
+    with pytest.raises(
+        ValueError, match=r"Expected one of \[enum1, enum2\] for b:x"
+    ):
         config_enum(sample_data, ["b", "x"], ["enum1", "enum2"])
 
 
 def test_config_image_reference():
-    data = {"foo": {
-        "repo": "a", "name": "b", "tag": "c", "other": "d", "num": 1}}
+    data = {
+        "foo": {"repo": "a", "name": "b", "tag": "c", "other": "d", "num": 1}
+    }
     assert str(config_image_reference(data, "foo")) == "a/b:c"
     assert str(config_image_reference(data, ["foo"], "other")) == "a/d:c"
     with pytest.raises(KeyError):
@@ -110,12 +120,7 @@ def test_config_vault():
     data = {
         "vault": {
             "addr": "https://example.com/vault",
-            "auth": {
-                "method": "github",
-                "args": {
-                    "token": "mytoken"
-                }
-            }
+            "auth": {"method": "github", "args": {"token": "mytoken"}},
         }
     }
     value = config_vault(data, ["vault"])
@@ -131,14 +136,11 @@ def test_parse_env_vars():
             "addr": "https://example.com/vault",
             "auth": {
                 "method": "approle",
-                "args": {
-                    "role_id": "$ROLE_ID",
-                    "secret_id": "456"
-                }
-            }
+                "args": {"role_id": "$ROLE_ID", "secret_id": "456"},
+            },
         },
         "test": ["one", "$TWO", "three"],
-        "test2": 123
+        "test2": 123,
     }
     with mock.patch.dict(os.environ, {"ROLE_ID": "id_123", "TWO": "two"}):
         out = parse_env_vars(data)
@@ -175,14 +177,19 @@ def test_combine():
         combine(a, b)
         return a
 
-    assert do_combine({"a": 1}, {"b": 2}) == \
-           {"a": 1, "b": 2}
-    assert do_combine({"a": {"x": 1}, "b": 2}, {"a": {"x": 3}}) == \
-           {"a": {"x": 3}, "b": 2}
-    assert do_combine({"a": {"x": 1, "y": 4}, "b": 2}, {"a": {"x": 3}}) == \
-           {"a": {"x": 3, "y": 4}, "b": 2}
-    assert do_combine({"a": None, "b": 2}, {"a": {"x": 3}}) == \
-           {"a": {"x": 3}, "b": 2}
+    assert do_combine({"a": 1}, {"b": 2}) == {"a": 1, "b": 2}
+    assert do_combine({"a": {"x": 1}, "b": 2}, {"a": {"x": 3}}) == {
+        "a": {"x": 3},
+        "b": 2,
+    }
+    assert do_combine({"a": {"x": 1, "y": 4}, "b": 2}, {"a": {"x": 3}}) == {
+        "a": {"x": 3, "y": 4},
+        "b": 2,
+    }
+    assert do_combine({"a": None, "b": 2}, {"a": {"x": 3}}) == {
+        "a": {"x": 3},
+        "b": 2,
+    }
 
 
 def test_combine_can_replace_dict():
@@ -214,10 +221,18 @@ def test_config_build_works():
         data = read_yaml(path_base)
         assert config_build(path, data) == data
         assert config_build(path, data, "options") == {"a": 2, "b": 4, "c": 3}
-        assert config_build(path, data, None, options) == \
-               {"a": 3, "b": 2, "c": 9, "x": "y"}
-        assert config_build(path, data, None, options2) == \
-               {"a": 3, "b": 2, "c": 9, "x": "z"}
+        assert config_build(path, data, None, options) == {
+            "a": 3,
+            "b": 2,
+            "c": 9,
+            "x": "y",
+        }
+        assert config_build(path, data, None, options2) == {
+            "a": 3,
+            "b": 2,
+            "c": 9,
+            "x": "z",
+        }
 
 
 def test_config_build_prevents_changing_container_prefix():

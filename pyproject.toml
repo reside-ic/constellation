@@ -1,0 +1,173 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "constellation"
+description = "Deploy scripts for constellations of docker containers"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Rich FitzJohn", email = "r.fitzjohn@imperial.ac.uk" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "docker",
+  "hvac",
+  "pyyaml",
+  "requests",
+  "vault_dev",
+]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://github.com/reside-ic/constellation#readme"
+Issues = "https://github.com/reside-ic/constellation/issues"
+Source = "https://github.com/reside-ic/constellation"
+
+[tool.hatch.version]
+path = "src/constellation/__about__.py"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=hipercow --cov=tests {args}"
+no-cov = "cov --no-cov {args}"
+cov-report-xml = [
+  "- coverage combine",
+  "coverage xml",
+]
+cov-ci = [
+  "test-cov",
+  "cov-report-xml",
+]
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.10", "3.11", "3.12", "3.13"]
+
+[tool.hatch.envs.lint]
+extra-dependencies = [
+  "black>=23.1.0",
+  "mypy>=1.0.0",
+  "ruff>=0.0.243",
+  "types-defusedxml",
+]
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --install-types --non-interactive {args:src tests}"
+style = [
+  "ruff check {args:.}",
+   "black --check --diff {args:.}",
+]
+fmt = [
+  "black {args:.}",
+  "ruff check --fix {args:.}",
+  "style",
+]
+all = [
+  "style",
+  "typing",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = [
+  "src/constellation/__about__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.black]
+line-length = 80
+skip-string-normalization = true
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.lint]
+select = [
+  # "A",
+  # "ARG",
+  # "B",
+  # "C",
+  # "D",
+  # "DTZ",
+  # "E",
+  # "EM",
+  # "F",
+  # "FBT",
+  # "I",
+  # "ICN",
+  # "ISC",
+  # "N",
+  # "PLC",
+  # "PLE",
+  # "PLR",
+  # "PLW",
+  # "Q",
+  # "RUF",
+  # "S",
+  # "T",
+  # "TID",
+  # "UP",
+  # "W",
+  # "YTT",
+]
+ignore = [
+  # Allow non-abstract empty methods in abstract base classes
+  "B027",
+  # Allow boolean positional values in function calls, like `dict.get(... True)`
+  "FBT003",
+  # Ignore checks for possible passwords
+  "S105", "S106", "S107",
+  # Ignore complexity
+  "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
+  # Don't require docstrings everywhere for now
+  "D100", "D101", "D102", "D103", "D104", "D105", "D107",
+  # Ignore shadowing
+  "A001", "A002", "A003",
+  # Allow pickle
+  "S301",
+  # Allow pickle
+  "S301",
+  # Allow subprocess (https://github.com/astral-sh/ruff/issues/4045)
+  "S603",
+  "S607", # don't use full path names for executables
+  # Allow print until we find the alternative to R's cli
+  "T201"
+]
+
+unfixable = [
+  # Don't touch unused imports
+  "F401",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

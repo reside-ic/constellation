@@ -27,7 +27,8 @@ def test_notifier_can_post():
     with mock.patch("requests.post", return_value=ret) as requests_post:
         obj.post(message)
     requests_post.assert_called_once_with(
-        obj.url, data=json.dumps({"text": message}), headers=obj.headers)
+        obj.url, data=json.dumps({"text": message}), headers=obj.headers
+    )
 
 
 def test_notifier_gracefully_handles_http_error():

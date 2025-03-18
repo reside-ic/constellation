@@ -12,8 +12,10 @@ def test_secret_reading():
         client = s.client()
         client.write("secret/foo", value="s3cret")
         assert resolve_secret("foo", client) == (False, "foo")
-        assert resolve_secret("VAULT:secret/foo:value", client) == \
-               (True, "s3cret")
+        assert resolve_secret("VAULT:secret/foo:value", client) == (
+            True,
+            "s3cret",
+        )
 
 
 def test_secret_reading_of_dicts():
@@ -111,9 +113,11 @@ def test_vault_config_when_missing():
 # This environment variable is configured on GitHub actions see usage details
 # https://mrc-ide.myjetbrains.com/youtrack/articles/RESIDE-A-18/Vault#keys
 def test_vault_config_login():
-    pytest.skip("Skipping test temporary, ticket to resolve this:"
-                + "https://mrc-ide.myjetbrains.com/youtrack/issue"
-                + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication")
+    pytest.skip(
+        "Skipping test temporary, ticket to resolve this:"
+        + "https://mrc-ide.myjetbrains.com/youtrack/issue"
+        + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
+    )
 
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
@@ -129,9 +133,11 @@ def test_vault_config_login():
 
 
 def test_vault_config_login_no_args():
-    pytest.skip("Skipping test temporary, ticket to resolve this:"
-                + "https://mrc-ide.myjetbrains.com/youtrack/issue"
-                + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication")
+    pytest.skip(
+        "Skipping test temporary, ticket to resolve this:"
+        + "https://mrc-ide.myjetbrains.com/youtrack/issue"
+        + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
+    )
 
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
