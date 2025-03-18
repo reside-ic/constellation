@@ -43,6 +43,7 @@ path = "src/constellation/__about__.py"
 [tool.hatch.envs.default]
 dependencies = [
   "pytest",
+  "pytest-cov",
 ]
 
 [tool.hatch.envs.default.scripts]
