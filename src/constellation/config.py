@@ -160,4 +160,4 @@ def get_envvar(name):
     try:
         return os.environ[name]
     except KeyError:
-        raise KeyError("Did not find env var '{}'".format(name))
+        raise KeyError("Did not find env var '{}'".format(name)) from None

@@ -102,7 +102,7 @@ def docker_exists(collection, name):
 
 # https://medium.com/@nagarwal/lifecycle-of-docker-container-d2da9f85959
 def container_wait_running(container, poll=0.1, timeout=1):
-    for i in range(math.ceil(timeout / poll)):
+    for _i in range(math.ceil(timeout / poll)):
         if container.status != "created":
             break
         time.sleep(poll)
@@ -126,14 +126,14 @@ def container_wait_running(container, poll=0.1, timeout=1):
 
 def container_remove_wait(container, poll=0.1, timeout=1):
     name = container.name
-    for i in range(math.ceil(timeout / poll)):
+    for _i in range(math.ceil(timeout / poll)):
         try:
             container.remove()
         except docker.errors.APIError:
             pass
         time.sleep(poll)
 
-    for i in range(math.ceil(timeout / poll)):
+    for _i in range(math.ceil(timeout / poll)):
         if not container_exists(name):
             return
         time.sleep(poll)

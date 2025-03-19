@@ -219,7 +219,7 @@ class ConstellationService:
 
     def start(self, prefix, network, volumes, data=None):
         print("Starting *service* {}".format(self.name))
-        for i in range(self.scale):
+        for _i in range(self.scale):
             name = "{}-{}".format(self.name, rand_str(8))
             container = ConstellationContainer(name, self.image, **self.kwargs)
             container.start(prefix, network, volumes, data)

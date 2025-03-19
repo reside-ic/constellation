@@ -111,7 +111,7 @@ line-length = 80
 select = [
   # "A",
   # "ARG",
-  # "B",
+  "B",
   # "C",
   # "D",
   # "DTZ",
