@@ -1,8 +1,9 @@
 import copy
-import tempfile
-import yaml
-import re
 import os
+import re
+import tempfile
+
+import yaml
 
 import constellation.vault as vault
 from constellation.util import ImageReference
@@ -160,4 +161,4 @@ def get_envvar(name):
     try:
         return os.environ[name]
     except KeyError:
-        raise KeyError("Did not find env var '{}'".format(name))
+        raise KeyError("Did not find env var '{}'".format(name)) from None

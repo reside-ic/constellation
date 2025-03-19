@@ -1,9 +1,9 @@
 import base64
 import io
-import pytest
 import tempfile
-
 from contextlib import redirect_stdout
+
+import pytest
 
 from constellation.docker_util import *
 
@@ -23,7 +23,7 @@ def test_exec_safely_throws_on_failure():
     container = cl.containers.run(
         "alpine", ["sleep", "10"], detach=True, auto_remove=True
     )
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=""):
         exec_safely(container, "missing_command")
     container.kill()
 
