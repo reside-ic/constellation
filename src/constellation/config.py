@@ -1,8 +1,9 @@
 import copy
-import tempfile
-import yaml
-import re
 import os
+import re
+import tempfile
+
+import yaml
 
 import constellation.vault as vault
 from constellation.util import ImageReference

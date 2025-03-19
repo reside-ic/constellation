@@ -1,8 +1,8 @@
 from constellation.constellation import (
     Constellation,
     ConstellationContainer,
-    ConstellationService,
     ConstellationMount,
+    ConstellationService,
 )
 from constellation.util import ImageReference
 

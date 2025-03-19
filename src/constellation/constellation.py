@@ -2,8 +2,7 @@ import docker
 
 import constellation.docker_util as docker_util
 import constellation.vault as vault
-
-from constellation.util import tabulate, rand_str
+from constellation.util import rand_str, tabulate
 
 
 class Constellation:

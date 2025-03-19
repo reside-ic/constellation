@@ -1,9 +1,9 @@
-import docker
 import io
+from contextlib import redirect_stdout
+
+import docker
 import pytest
 import vault_dev
-
-from contextlib import redirect_stdout
 
 import constellation
 from constellation.constellation import *

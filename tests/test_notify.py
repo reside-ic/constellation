@@ -1,10 +1,10 @@
 import io
 import json
-import pytest
-import requests
-
 from contextlib import redirect_stdout
 from unittest import mock
+
+import pytest
+import requests
 
 from constellation.notifier import Notifier
 
