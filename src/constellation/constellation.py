@@ -1,3 +1,5 @@
+from abc import abstractmethod
+from typing import Protocol, Optional
 import docker
 
 import constellation.docker_util as docker_util
@@ -86,6 +88,16 @@ class Constellation:
         self.stop(True, True, True)
 
 
+class _ConstellationMount(Protocol):
+    target: str
+    kwargs: dict
+
+    @abstractmethod
+    def to_mount(self, volumes: Optional[dict] = None) -> docker.types.Mount:
+        """Convert to a Docker mount. Subclasses can use `volumes` if needed."""
+        raise NotImplementedError("Subclasses must implement `to_mount`")
+
+
 class ConstellationContainer:
     """For ports, to remap a port pass a tuple (port_container,
     port_host), such as:
@@ -101,7 +113,7 @@ class ConstellationContainer:
         name,
         image,
         args=None,
-        mounts=None,
+        mounts: list[_ConstellationMount]=[],
         ports=None,
         environment=None,
         configure=None,
@@ -114,7 +126,7 @@ class ConstellationContainer:
         self.name = name
         self.image = image
         self.args = args
-        self.mounts = mounts or []
+        self.mounts = mounts
         self.ports_config = port_config(ports)
         self.container_ports = container_ports(self.ports_config)
         self.environment = environment
@@ -134,7 +146,7 @@ class ConstellationContainer:
     def exists(self, prefix):
         return docker_util.container_exists(self.name_external(prefix))
 
-    def start(self, prefix, network, volumes, data=None):
+    def start(self, prefix, network, volumes: dict, data=None):
         cl = docker.client.from_env()
         nm = self.name_external(prefix)
         print("Starting {} ({})".format(self.name, str(self.image)))
@@ -335,21 +347,11 @@ class ConstellationNetwork:
         docker_util.remove_network(self.name)
 
 
-# Base class for mounts.
-class _ConstellationMount:
-    def __init__(self, target, **kwargs):
+class ConstellationVolumeMount:
+    def __init__(self, name, target, **kwargs):
+        self.name = name
         self.target = target
         self.kwargs = kwargs
-
-    def to_mount(self, volumes):
-        """Convert to a Docker mount. Subclasses can use `volumes` if needed."""
-        raise NotImplementedError("Subclasses must implement `to_mount`")
-
-
-class ConstellationVolumeMount(_ConstellationMount):
-    def __init__(self, name, target, **kwargs):
-        super().__init__(target, **kwargs)
-        self.name = name
         self.kwargs["type"] = "volume"
 
     def to_mount(self, volumes):
@@ -358,14 +360,17 @@ class ConstellationVolumeMount(_ConstellationMount):
         )
 
 
-class ConstellationBindMount(_ConstellationMount):
+class ConstellationBindMount:
     def __init__(self, source, target, **kwargs):
-        super().__init__(target, **kwargs)
         self.source = source
+        self.target = target
+        self.kwargs = kwargs
         self.kwargs["type"] = "bind"
 
     def to_mount(self, _volumes):
-        return docker.types.Mount(self.target, self.source, **self.kwargs)
+        return docker.types.Mount(
+            self.target, self.source, **self.kwargs
+        )
 
 
 def int_into_tuple(i):
