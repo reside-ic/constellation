@@ -1,15 +1,17 @@
 from constellation.constellation import (
     Constellation,
+    ConstellationBindMount,
     ConstellationContainer,
     ConstellationService,
-    ConstellationMount,
+    ConstellationVolumeMount,
 )
 from constellation.util import ImageReference
 
 __all__ = [
     "Constellation",
+    "ConstellationBindMount",
     "ConstellationContainer",
     "ConstellationService",
-    "ConstellationMount",
+    "ConstellationVolumeMount",
     "ImageReference",
 ]

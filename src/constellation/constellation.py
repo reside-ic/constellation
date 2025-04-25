@@ -335,15 +335,27 @@ class ConstellationNetwork:
         docker_util.remove_network(self.name)
 
 
-class ConstellationMount:
-    def __init__(self, name, path, **kwargs):
+class ConstellationVolumeMount:
+    def __init__(self, name, target, **kwargs):
         self.name = name
-        self.path = path
-        self.kwargs = kwargs
+        self.target = target
+        self.kwargs = {**kwargs, "type": "volume"}
 
     def to_mount(self, volumes):
         return docker.types.Mount(
-            self.path, volumes.get(self.name), **self.kwargs
+            self.target, volumes.get(self.name), **self.kwargs
+        )
+
+
+class ConstellationBindMount:
+    def __init__(self, source, target, **kwargs):
+        self.source = source
+        self.target = target
+        self.kwargs = {**kwargs, "type": "bind"}
+
+    def to_mount(self, _volumes=None):
+        return docker.types.Mount(
+            self.target, self.source, **self.kwargs
         )
 
 
