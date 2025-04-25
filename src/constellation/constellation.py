@@ -335,28 +335,39 @@ class ConstellationNetwork:
         docker_util.remove_network(self.name)
 
 
-class ConstellationVolumeMount:
-    def __init__(self, name, target, **kwargs):
-        self.name = name
+# Base class for mounts.
+class _ConstellationMount:
+    def __init__(self, target, **kwargs):
         self.target = target
-        self.kwargs = {**kwargs, "type": "volume"}
+        self.kwargs = kwargs
 
     def to_mount(self, volumes):
+        """Convert to a Docker mount. Subclasses can use `volumes` if needed."""
+        raise NotImplementedError("Subclasses must implement `to_mount`")
+
+
+class ConstellationVolumeMount(_ConstellationMount):
+    def __init__(self, name, target, **kwargs):
+        super().__init__(target, **kwargs)
+        self.name = name
+        self.kwargs["type"] = "volume"
+
+    def to_mount(self, volumes):
+        if volumes is None:
+            raise ValueError("`volumes` must be provided for VolumeMount")
         return docker.types.Mount(
             self.target, volumes.get(self.name), **self.kwargs
         )
 
 
-class ConstellationBindMount:
+class ConstellationBindMount(_ConstellationMount):
     def __init__(self, source, target, **kwargs):
+        super().__init__(target, **kwargs)
         self.source = source
-        self.target = target
-        self.kwargs = {**kwargs, "type": "bind"}
+        self.kwargs["type"] = "bind"
 
-    def to_mount(self, _volumes=None):
-        return docker.types.Mount(
-            self.target, self.source, **self.kwargs
-        )
+    def to_mount(self, _volumes):
+        return docker.types.Mount(self.target, self.source, **self.kwargs)
 
 
 def int_into_tuple(i):
