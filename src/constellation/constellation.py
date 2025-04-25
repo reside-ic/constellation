@@ -113,7 +113,7 @@ class ConstellationContainer:
         name,
         image,
         args=None,
-        mounts: list[_ConstellationMount]=[],
+        mounts: list[_ConstellationMount] = [],
         ports=None,
         environment=None,
         configure=None,
@@ -368,9 +368,7 @@ class ConstellationBindMount:
         self.kwargs["type"] = "bind"
 
     def to_mount(self, _volumes):
-        return docker.types.Mount(
-            self.target, self.source, **self.kwargs
-        )
+        return docker.types.Mount(self.target, self.source, **self.kwargs)
 
 
 def int_into_tuple(i):
