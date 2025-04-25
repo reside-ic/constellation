@@ -353,8 +353,6 @@ class ConstellationVolumeMount(_ConstellationMount):
         self.kwargs["type"] = "volume"
 
     def to_mount(self, volumes):
-        if volumes is None:
-            raise ValueError("`volumes` must be provided for VolumeMount")
         return docker.types.Mount(
             self.target, volumes.get(self.name), **self.kwargs
         )
