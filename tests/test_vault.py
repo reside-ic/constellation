@@ -1,7 +1,6 @@
-import pytest
-
 from unittest import mock
 
+import pytest
 import vault_dev
 
 from constellation.vault import *
