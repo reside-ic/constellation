@@ -117,7 +117,7 @@ class ConstellationContainer:
         name,
         image,
         args=None,
-        mounts: list[_ConstellationMount] = [],
+        mounts=None,
         ports=None,
         environment=None,
         configure=None,
@@ -130,7 +130,7 @@ class ConstellationContainer:
         self.name = name
         self.image = image
         self.args = args
-        self.mounts = mounts
+        self.mounts = mounts or []
         self.ports_config = port_config(ports)
         self.container_ports = container_ports(self.ports_config)
         self.environment = environment
@@ -150,7 +150,7 @@ class ConstellationContainer:
     def exists(self, prefix):
         return docker_util.container_exists(self.name_external(prefix))
 
-    def start(self, prefix, network, volumes: dict, data=None):
+    def start(self, prefix, network, volumes, data=None):
         cl = docker.client.from_env()
         nm = self.name_external(prefix)
         print("Starting {} ({})".format(self.name, str(self.image)))
