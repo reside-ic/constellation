@@ -122,7 +122,7 @@ def test_volume_mount_with_args():
     )
 
 
-def test_volume_mount_with_relative_paths():
+def test_bind_mount_with_relative_paths():
     with pytest.raises(
         ValueError, match="Path 'target_path' must be an absolute path."
     ):
