@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Protocol, Optional
+from typing import Optional
 import docker
 
 import constellation.docker_util as docker_util
