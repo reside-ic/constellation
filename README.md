@@ -21,3 +21,5 @@ Automatically publish to [PyPI](https://pypi.org/project/constellation).  Assumi
 * Optionally describe the release
 * Click "Publish release"
 * This triggers the release workflow and the package will be available on PyPI in a few minutes
+
+Settings are configured [here on PyPI](https://pypi.org/manage/project/constellation/settings/publishing)
