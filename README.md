@@ -10,3 +10,16 @@ An alternative to docker-compose more suited to our needs. A package for managin
 ```
 pip install constellation
 ```
+
+## Publishing
+
+Automatically publish to [PyPI](https://pypi.org/project/constellation).  Assuming a version number `0.1.2`:
+
+* Create a [release on github](https://github.com/reside-ic/constellation/releases/new)
+* Choose a tag -> Create a new tag: `v0.1.2`
+* Use this version as the description
+* Optionally describe the release
+* Click "Publish release"
+* This triggers the release workflow and the package will be available on PyPI in a few minutes
+
+Settings are configured [here on PyPI](https://pypi.org/manage/project/constellation/settings/publishing)
