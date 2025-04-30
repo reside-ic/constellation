@@ -1,9 +1,12 @@
+from abc import abstractmethod
+from typing import Optional
 import docker
 
 import constellation.docker_util as docker_util
 import constellation.vault as vault
 
 from constellation.util import tabulate, rand_str
+from pathlib import Path
 
 
 class Constellation:
@@ -84,6 +87,19 @@ class Constellation:
 
     def destroy(self):
         self.stop(True, True, True)
+
+
+class _ConstellationMount:
+    """Base class for Docker mounts."""
+
+    @abstractmethod
+    def to_mount(
+        self, volumes: Optional[dict] = None
+    ) -> docker.types.Mount: ...
+
+    def _assert_absolute_path(self, path):
+        if not Path(path).is_absolute():
+            raise ValueError(f"Path '{path}' must be an absolute path.")
 
 
 class ConstellationContainer:
@@ -335,16 +351,31 @@ class ConstellationNetwork:
         docker_util.remove_network(self.name)
 
 
-class ConstellationMount:
-    def __init__(self, name, path, **kwargs):
+class ConstellationVolumeMount(_ConstellationMount):
+    def __init__(self, name, target, **kwargs):
+        self._assert_absolute_path(target)
+        self.target = target
         self.name = name
-        self.path = path
         self.kwargs = kwargs
+        self.kwargs["type"] = "volume"
 
     def to_mount(self, volumes):
         return docker.types.Mount(
-            self.path, volumes.get(self.name), **self.kwargs
+            self.target, volumes.get(self.name), **self.kwargs
         )
+
+
+class ConstellationBindMount(_ConstellationMount):
+    def __init__(self, source, target, **kwargs):
+        self._assert_absolute_path(target)
+        self.target = target
+        self._assert_absolute_path(source)
+        self.source = source
+        self.kwargs = kwargs
+        self.kwargs["type"] = "bind"
+
+    def to_mount(self, _volumes):
+        return docker.types.Mount(self.target, self.source, **self.kwargs)
 
 
 def int_into_tuple(i):

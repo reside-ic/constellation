@@ -80,32 +80,90 @@ def test_empty_volume_collection():
         pytest.fail("Unexpected error")
 
 
+def test_volume_mount_with_relative_paths():
+    with pytest.raises(
+        ValueError, match="Path 'target_path' must be an absolute path."
+    ):
+        ConstellationVolumeMount("role1", "target_path")
+
+
 # This one needs the volume collection to test
-def test_mount_with_no_args():
-    role1 = "role1"
-    role2 = "role2"
-    name1 = rand_str()
-    name2 = rand_str()
-    vols = ConstellationVolumeCollection({role1: name1, role2: name2})
-    m = ConstellationMount(role1, "path")
-    assert m.name == "role1"
-    assert m.path == "path"
-    assert m.kwargs == {}
-    assert m.to_mount(vols) == docker.types.Mount("path", name1)
-
-
-def test_mount_with_args():
+def test_volume_mount_with_no_args():
     role1 = "role1"
     role2 = "role2"
     name1 = rand_str()
     name2 = rand_str()
     vols = ConstellationVolumeCollection({role1: name1, role2: name2})
 
-    m = ConstellationMount("role1", "path", read_only=True)
+    absolute_target_path = "/target_path"
+    m = ConstellationVolumeMount(role1, absolute_target_path)
     assert m.name == "role1"
-    assert m.path == "path"
-    assert m.kwargs == {"read_only": True}
-    assert m.to_mount(vols) == docker.types.Mount("path", name1, read_only=True)
+    assert m.target == absolute_target_path
+    assert m.kwargs == {"type": "volume"}
+    assert m.to_mount(vols) == docker.types.Mount(
+        absolute_target_path, name1, type="volume"
+    )
+
+
+def test_volume_mount_with_args():
+    role1 = "role1"
+    role2 = "role2"
+    name1 = rand_str()
+    name2 = rand_str()
+    vols = ConstellationVolumeCollection({role1: name1, role2: name2})
+
+    absolute_target_path = "/target_path"
+    m = ConstellationVolumeMount("role1", absolute_target_path, read_only=True)
+    assert m.name == "role1"
+    assert m.target == absolute_target_path
+    assert m.kwargs == {"type": "volume", "read_only": True}
+    assert m.to_mount(vols) == docker.types.Mount(
+        absolute_target_path, name1, type="volume", read_only=True
+    )
+
+
+def test_bind_mount_with_relative_paths():
+    with pytest.raises(
+        ValueError, match="Path 'target_path' must be an absolute path."
+    ):
+        ConstellationBindMount("/source_path", "target_path")
+    with pytest.raises(
+        ValueError, match="Path 'source_path' must be an absolute path."
+    ):
+        ConstellationBindMount("source_path", "/target_path")
+
+
+def test_bind_mount_with_no_args():
+    role1 = "role1"
+    role2 = "role2"
+    name1 = rand_str()
+    name2 = rand_str()
+    # Creat volume collection so that we can test the interface of to_mount
+    vols = ConstellationVolumeCollection({role1: name1, role2: name2})
+
+    m = ConstellationBindMount("/source_path", "/target_path")
+    assert m.source == "/source_path"
+    assert m.target == "/target_path"
+    assert m.kwargs == {"type": "bind"}
+    assert m.to_mount(vols) == docker.types.Mount(
+        "/target_path", "/source_path", type="bind"
+    )
+
+
+def test_bind_mount_with_args():
+    role1 = "role1"
+    role2 = "role2"
+    name1 = rand_str()
+    name2 = rand_str()
+    vols = ConstellationVolumeCollection({role1: name1, role2: name2})
+
+    m = ConstellationBindMount("/source_path", "/target_path", read_only=True)
+    assert m.source == "/source_path"
+    assert m.target == "/target_path"
+    assert m.kwargs == {"type": "bind", "read_only": True}
+    assert m.to_mount(vols) == docker.types.Mount(
+        "/target_path", "/source_path", type="bind", read_only=True
+    )
 
 
 def test_container_simple():
