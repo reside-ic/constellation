@@ -388,7 +388,7 @@ def port_config(ports):
     if not ports:
         return None
     tuple_ports = [int_into_tuple(p) for p in ports]
-    return {k: v for k, v in tuple_ports}
+    return dict(tuple_ports)
 
 
 def container_ports(ports):
