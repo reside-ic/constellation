@@ -29,7 +29,8 @@ def exec_safely(container, args, **kwargs):
     ans = container.exec_run(args, **kwargs)
     if ans[0] != 0:
         print(ans[1].decode("UTF-8"))
-        raise Exception("Error running command (see above for log)")
+        msg = "Error running command (see above for log)"
+        raise Exception(msg)
     return ans
 
 
@@ -108,17 +109,19 @@ def container_wait_running(container, poll=0.1, timeout=1):
         time.sleep(poll)
         container.reload()
     if container.status != "running":
-        raise Exception(
+        msg = (
             f"container '{container.name}' ({container.id[:8]}) "
             "is not running ({container.status})"
         )
+        raise Exception(msg)
     time.sleep(timeout)
     container.reload()
     if container.status != "running":
-        raise Exception(
+        msg = (
             f"container '{container.name}' ({container.id[:8]}) "
             "was running but is now {container.status}"
         )
+        raise Exception(msg)
     return container
 
 
@@ -136,7 +139,8 @@ def container_remove_wait(container, poll=0.1, timeout=1):
             return
         time.sleep(poll)
 
-    raise Exception(f"container '{name}' was not removed in time")
+    msg = f"container '{name}' was not removed in time"
+    raise Exception(msg)
 
 
 def simple_tar(path, name):

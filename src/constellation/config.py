@@ -54,7 +54,8 @@ def config_value(data, path, data_type, is_optional, default=None):
         "list": list,
     }
     if type(data) is not expected[data_type]:
-        raise ValueError("Expected {} for {}".format(data_type, ":".join(path)))
+        msg = "Expected {} for {}".format(data_type, ":".join(path))
+        raise ValueError(msg)
     return data
 
 
@@ -88,14 +89,12 @@ def config_dict_strict(data, path, keys, is_optional=False, default=None):
     if not d:
         return default
     if set(keys) != set(d.keys()):
-        raise ValueError(
-            "Expected keys {} for {}".format(", ".join(keys), ":".join(path))
-        )
+        msg = "Expected keys {} for {}".format(", ".join(keys), ":".join(path))
+        raise ValueError(msg)
     for k, v in d.items():
         if type(v) is not str:
-            raise ValueError(
-                "Expected a string for {}".format(":".join([*path, k]))
-            )
+            msg = "Expected a string for {}".format(":".join([*path, k]))
+            raise ValueError(msg)
     return d
 
 
@@ -106,11 +105,10 @@ def config_list(data, path, is_optional=False, default=None):
 def config_enum(data, path, values, is_optional=False, default=None):
     value = config_string(data, path, is_optional, default)
     if value not in values:
-        raise ValueError(
-            "Expected one of [{}] for {}".format(
-                ", ".join(values), ":".join(path)
-            )
+        msg = "Expected one of [{}] for {}".format(
+            ", ".join(values), ":".join(path)
         )
+        raise ValueError(msg)
     return value
 
 
@@ -125,7 +123,8 @@ def config_image_reference(dat, path, name="name"):
 
 def config_check_additional(options):
     if "container_prefix" in options:
-        raise Exception("'container_prefix' may not be modified")
+        msg = "'container_prefix' may not be modified"
+        raise Exception(msg)
 
 
 def combine(base, extra):
@@ -161,4 +160,5 @@ def get_envvar(name):
     try:
         return os.environ[name]
     except KeyError:
-        raise KeyError(f"Did not find env var '{name}'") from None
+        msg = f"Did not find env var '{name}'"
+        raise KeyError(msg) from None

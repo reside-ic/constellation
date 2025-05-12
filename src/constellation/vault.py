@@ -10,14 +10,17 @@ def resolve_secret(value, client):
         return False, value
     m = re_vault.match(value)
     if not m:
-        raise Exception(f"Invalid vault accessor '{value}'")
+        msg = f"Invalid vault accessor '{value}'"
+        raise Exception(msg)
     path, key = m.groups()
     data = client.read(path)
     if not data:
-        raise Exception(f"Did not find secret at '{path}'")
+        msg = f"Did not find secret at '{path}'"
+        raise Exception(msg)
 
     if key not in data["data"]:
-        raise Exception(f"Did not find key '{key}' at secret path '{path}'")
+        msg = f"Did not find key '{key}' at secret path '{path}'"
+        raise Exception(msg)
     return True, data["data"][key]
 
 
@@ -87,7 +90,8 @@ class VaultConfig:
 
 class vault_not_enabled:
     def __getattr__(self, name):
-        raise Exception("Vault access is not enabled")
+        msg = "Vault access is not enabled"
+        raise Exception(msg)
 
 
 def get_github_token():

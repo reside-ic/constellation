@@ -59,7 +59,8 @@ class Constellation:
 
     def start(self, pull_images=False, subset=None):
         if subset is None and any(self.containers.exists(self.prefix)):
-            raise Exception("Some containers exist")
+            msg = "Some containers exist"
+            raise Exception(msg)
         if self.vault_config:
             vault.resolve_secrets(self.data, self.vault_config.client())
         if pull_images:
@@ -98,7 +99,8 @@ class _ConstellationMount:
 
     def _assert_absolute_path(self, path):
         if not Path(path).is_absolute():
-            raise ValueError(f"Path '{path}' must be an absolute path.")
+            msg = f"Path '{path}' must be an absolute path."
+            raise ValueError(msg)
 
 
 class ConstellationContainer:
@@ -271,7 +273,8 @@ class ConstellationContainerCollection:
         for x in self.collection:
             if x.name == name:
                 return x
-        raise Exception(f"Container '{name}' not defined")
+        msg = f"Container '{name}' not defined"
+        raise Exception(msg)
 
     def get(self, name, prefix):
         return self.find(name).get(prefix)
@@ -325,7 +328,8 @@ class ConstellationVolumeCollection:
         for x in self.collection:
             if x.role == role:
                 return x.name
-        raise Exception(f"Mount with role '{role}' not defined")
+        msg = f"Mount with role '{role}' not defined"
+        raise Exception(msg)
 
     def create(self):
         for vol in self.collection:
