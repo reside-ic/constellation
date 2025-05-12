@@ -1,9 +1,9 @@
 import base64
 import io
-import pytest
 import tempfile
-
 from contextlib import redirect_stdout
+
+import pytest
 
 from constellation.docker_util import *
 
