@@ -61,9 +61,9 @@ def config_value(data, path, data_type, is_optional, default=None):
 # TODO: This can be made better with respect to optional values (e.g.,
 # if url is present other keys are required).
 def config_vault(data, path):
-    url = config_string(data, path + ["addr"], True)
-    auth_method = config_string(data, path + ["auth", "method"], True)
-    auth_args = config_dict(data, path + ["auth", "args"], True)
+    url = config_string(data, [*path, "addr"], True)
+    auth_method = config_string(data, [*path, "auth", "method"], True)
+    auth_args = config_dict(data, [*path, "auth", "args"], True)
     return vault.VaultConfig(url, auth_method, auth_args)
 
 
@@ -94,7 +94,7 @@ def config_dict_strict(data, path, keys, is_optional=False, default=None):
     for k, v in d.items():
         if type(v) is not str:
             raise ValueError(
-                "Expected a string for {}".format(":".join(path + [k]))
+                "Expected a string for {}".format(":".join([*path, k]))
             )
     return d
 
@@ -117,9 +117,9 @@ def config_enum(data, path, values, is_optional=False, default=None):
 def config_image_reference(dat, path, name="name"):
     if type(path) is str:
         path = [path]
-    repo = config_string(dat, path + ["repo"])
-    name = config_string(dat, path + [name])
-    tag = config_string(dat, path + ["tag"])
+    repo = config_string(dat, [*path, "repo"])
+    name = config_string(dat, [*path, name])
+    tag = config_string(dat, [*path, "tag"])
     return ImageReference(repo, name, tag)
 
 

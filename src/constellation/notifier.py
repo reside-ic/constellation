@@ -8,7 +8,7 @@ class Notifier:
         self.enabled = webhook is not None
         if self.enabled:
             self.url = webhook
-            self.headers = {'Content-Type': 'application/json'}
+            self.headers = {"Content-Type": "application/json"}
 
     def post(self, message):
         if not self.enabled:

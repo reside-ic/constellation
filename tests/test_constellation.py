@@ -495,8 +495,8 @@ def test_restart_pulls_and_replaces_containers():
         "Stop 'client'",
         "Removing 'server'",
         "Removing 'client'",
-        'Starting server (library/nginx:latest)',
-        'Starting client (library/alpine:latest)',
+        "Starting server (library/nginx:latest)",
+        "Starting client (library/alpine:latest)",
     ]
 
     assert obj.containers.get("server", obj.prefix).id != id_server

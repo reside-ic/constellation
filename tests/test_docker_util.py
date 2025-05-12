@@ -127,7 +127,7 @@ def test_file_into_container():
         "alpine", ["sleep", "20"], detach=True, auto_remove=True
     )
     # part of a PNG - doesn't really matter, so long as it's binary:
-    content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
+    content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
     with tempfile.NamedTemporaryFile() as f:
         f.write(content)
         f.seek(0)

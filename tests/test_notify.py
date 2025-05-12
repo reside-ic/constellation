@@ -21,7 +21,7 @@ def test_notifier_can_post():
     message = "hello"
     obj = Notifier(url)
     assert obj.enabled
-    assert obj.headers == {'Content-Type': 'application/json'}
+    assert obj.headers == {"Content-Type": "application/json"}
     ret = mock.Mock(spec=requests.Response)
     ret.status_code = 200
     with mock.patch("requests.post", return_value=ret) as requests_post:
