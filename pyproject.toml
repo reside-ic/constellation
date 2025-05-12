@@ -121,7 +121,7 @@ select = [
   # "FBT",
   "I",
   "ICN",
-  # "ISC",
+  "ISC",
   # "N",
   "PLC",
   "PLE",

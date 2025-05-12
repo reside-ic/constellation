@@ -114,8 +114,8 @@ def test_vault_config_when_missing():
 def test_vault_config_login():
     pytest.skip(
         "Skipping test temporary, ticket to resolve this:"
-        + "https://mrc-ide.myjetbrains.com/youtrack/issue"
-        + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
+        "https://mrc-ide.myjetbrains.com/youtrack/issue"
+        "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
     )
 
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
@@ -134,8 +134,8 @@ def test_vault_config_login():
 def test_vault_config_login_no_args():
     pytest.skip(
         "Skipping test temporary, ticket to resolve this:"
-        + "https://mrc-ide.myjetbrains.com/youtrack/issue"
-        + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
+        "https://mrc-ide.myjetbrains.com/youtrack/issue"
+        "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
     )
 
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
