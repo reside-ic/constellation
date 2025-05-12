@@ -4,8 +4,7 @@ from typing import Optional
 
 import docker
 
-import constellation.docker_util as docker_util
-import constellation.vault as vault
+from constellation import docker_util, vault
 from constellation.util import rand_str, tabulate
 
 

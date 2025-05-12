@@ -5,7 +5,7 @@ import tempfile
 
 import yaml
 
-import constellation.vault as vault
+from constellation import vault
 from constellation.util import ImageReference
 
 
@@ -64,7 +64,7 @@ def config_vault(data, path):
     url = config_string(data, path + ["addr"], True)
     auth_method = config_string(data, path + ["auth", "method"], True)
     auth_args = config_dict(data, path + ["auth", "args"], True)
-    return vault.vault_config(url, auth_method, auth_args)
+    return vault.VaultConfig(url, auth_method, auth_args)
 
 
 def config_string(data, path, is_optional=False, default=None):

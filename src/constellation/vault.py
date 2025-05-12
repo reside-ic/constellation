@@ -55,7 +55,7 @@ def resolve_secrets_dict(d, client):
             resolve_secrets_dict(v, client)
 
 
-class vault_config:
+class VaultConfig:
     def __init__(self, url, auth_method, auth_args):
         self.url = url
         self.auth_method = auth_method
