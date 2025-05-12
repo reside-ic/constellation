@@ -10,7 +10,7 @@ from constellation.util import ImageReference
 
 
 def read_yaml(filename):
-    with open(filename, "r") as f:
+    with open(filename) as f:
         dat = yaml.load(f, Loader=yaml.SafeLoader)
     dat = parse_env_vars(dat)
     return dat
@@ -19,7 +19,7 @@ def read_yaml(filename):
 def config_build(path, data, extra=None, options=None):
     data = copy.deepcopy(data)
     if extra:
-        data_extra = read_yaml("{}/{}.yml".format(path, extra))
+        data_extra = read_yaml(f"{path}/{extra}.yml")
         config_check_additional(data_extra)
         combine(data, data_extra)
     if options:
@@ -161,4 +161,4 @@ def get_envvar(name):
     try:
         return os.environ[name]
     except KeyError:
-        raise KeyError("Did not find env var '{}'".format(name)) from None
+        raise KeyError(f"Did not find env var '{name}'") from None

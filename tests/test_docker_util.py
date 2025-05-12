@@ -50,7 +50,7 @@ def test_remove_network_removes_network():
     with redirect_stdout(f):
         remove_network(name)
 
-    assert f.getvalue() == "Removing network '{}'\n".format(name)
+    assert f.getvalue() == f"Removing network '{name}'\n"
     assert name not in [x.name for x in cl.networks.list()]
 
 
@@ -75,7 +75,7 @@ def test_remove_volume_removes_volume():
     with redirect_stdout(f):
         remove_volume(name)
 
-    assert f.getvalue() == "Removing volume '{}'\n".format(name)
+    assert f.getvalue() == f"Removing volume '{name}'\n"
     assert name not in [x.name for x in cl.volumes.list()]
 
 

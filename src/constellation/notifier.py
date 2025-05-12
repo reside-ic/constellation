@@ -36,4 +36,4 @@ class Notifier:
 
         if error:
             self.enabled = False
-            print("Problem sending the slack message:\n{}".format(error))
+            print(f"Problem sending the slack message:\n{error}")

@@ -10,16 +10,14 @@ def resolve_secret(value, client):
         return False, value
     m = re_vault.match(value)
     if not m:
-        raise Exception("Invalid vault accessor '{}'".format(value))
+        raise Exception(f"Invalid vault accessor '{value}'")
     path, key = m.groups()
     data = client.read(path)
     if not data:
-        raise Exception("Did not find secret at '{}'".format(path))
+        raise Exception(f"Did not find secret at '{path}'")
 
     if key not in data["data"]:
-        raise Exception(
-            "Did not find key '{}' at secret path '{}'".format(key, path)
-        )
+        raise Exception(f"Did not find key '{key}' at secret path '{path}'")
     return True, data["data"][key]
 
 
@@ -75,11 +73,7 @@ class VaultConfig:
             cl = hvac.Client(url=self.url, token=self.auth_args["token"])
         else:
             cl = hvac.Client(url=self.url)
-            print(
-                "Authenticating with the vault using '{}'".format(
-                    self.auth_method
-                )
-            )
+            print(f"Authenticating with the vault using '{self.auth_method}'")
 
             if self.auth_method == "github":
                 if not self.auth_args:

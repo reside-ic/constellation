@@ -91,7 +91,7 @@ def test_error_for_missing_secret_key():
 
 def test_vault_config():
     with vault_dev.server() as s:
-        url = "http://localhost:{}".format(s.port)
+        url = f"http://localhost:{s.port}"
         cfg = vault_config(url, "token", {"token": s.token})
         cl = cfg.client()
         assert cl.is_authenticated()
@@ -125,7 +125,7 @@ def test_vault_config_login():
         cl.sys.enable_auth_method(method_type="github")
         cl.write("auth/github/config", organization="vimc")
 
-        url = "http://localhost:{}".format(s.port)
+        url = f"http://localhost:{s.port}"
         token = os.environ["VAULT_TEST_GITHUB_PAT"]
         cfg = vault_config(url, "github", {"token": token})
         assert cfg.client().is_authenticated()
@@ -145,7 +145,7 @@ def test_vault_config_login_no_args():
         cl = s.client()
         cl.sys.enable_auth_method(method_type="github")
         cl.write("auth/github/config", organization="vimc")
-        url = "http://localhost:{}".format(s.port)
+        url = f"http://localhost:{s.port}"
         token = os.environ["VAULT_TEST_GITHUB_PAT"]
         with mock.patch.dict(os.environ, {"VAULT_AUTH_GITHUB_TOKEN": token}):
             cfg = vault_config(url, "github", None)

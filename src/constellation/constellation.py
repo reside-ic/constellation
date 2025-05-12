@@ -42,20 +42,20 @@ class Constellation:
         nw_status = (
             "created" if docker_util.network_exists(nw_name) else "missing"
         )
-        print("Constellation {}".format(self.name))
+        print(f"Constellation {self.name}")
         print("  * Network:")
-        print("    - {}: {}".format(nw_name, nw_status))
+        print(f"    - {nw_name}: {nw_status}")
         print("  * Volumes:")
         for v in self.volumes.collection:
             v_status = (
                 "created" if docker_util.volume_exists(v.name) else "missing"
             )
-            print("    - {} ({}): {}".format(v.role, v.name, v_status))
+            print(f"    - {v.role} ({v.name}): {v_status}")
         print("  * Containers:")
         for x in self.containers.collection:
             x_name = x.name_external(self.prefix)
             x_status = x.status(self.prefix)
-            print("    - {} ({}): {}".format(x.name, x_name, x_status))
+            print(f"    - {x.name} ({x_name}): {x_status}")
 
     def start(self, pull_images=False, subset=None):
         if subset is None and any(self.containers.exists(self.prefix)):
@@ -141,7 +141,7 @@ class ConstellationContainer:
         self.network = network
 
     def name_external(self, prefix):
-        return "{}-{}".format(prefix, self.name)
+        return f"{prefix}-{self.name}"
 
     def pull_image(self):
         docker_util.image_pull(self.name, str(self.image))
@@ -152,7 +152,7 @@ class ConstellationContainer:
     def start(self, prefix, network, volumes, data=None):
         cl = docker.client.from_env()
         nm = self.name_external(prefix)
-        print("Starting {} ({})".format(self.name, str(self.image)))
+        print(f"Starting {self.name} ({self.image!s})")
         mounts = [x.to_mount(volumes) for x in self.mounts]
 
         if self.ports_config:
@@ -208,7 +208,7 @@ class ConstellationContainer:
     def remove(self, prefix):
         container = self.get(prefix)
         if container:
-            print("Removing '{}'".format(self.name))
+            print(f"Removing '{self.name}'")
             with docker_util.ignoring_missing():
                 container.remove()
 
@@ -224,7 +224,7 @@ class ConstellationService:
         self.base = ConstellationContainer(name, image, **kwargs)
 
     def name_external(self, prefix):
-        return "{}-<i>".format(self.base.name_external(prefix))
+        return f"{self.base.name_external(prefix)}-<i>"
 
     def pull_image(self):
         self.base.pull_image()
@@ -233,9 +233,9 @@ class ConstellationService:
         return bool(self.get(prefix))
 
     def start(self, prefix, network, volumes, data=None):
-        print("Starting *service* {}".format(self.name))
+        print(f"Starting *service* {self.name}")
         for _i in range(self.scale):
-            name = "{}-{}".format(self.name, rand_str(8))
+            name = f"{self.name}-{rand_str(8)}"
             container = ConstellationContainer(name, self.image, **self.kwargs)
             container.start(prefix, network, volumes, data)
 
@@ -246,7 +246,7 @@ class ConstellationService:
     def status(self, prefix):
         status = tabulate([x.status for x in self.get(prefix)])
         if status:
-            ret = ", ".join(["{} ({})".format(k, v) for k, v in status.items()])
+            ret = ", ".join([f"{k} ({v})" for k, v in status.items()])
         else:
             ret = "missing"
         return ret
@@ -258,7 +258,7 @@ class ConstellationService:
     def remove(self, prefix):
         containers = self.get(prefix, True)
         if containers:
-            print("Removing '{}'".format(self.name))
+            print(f"Removing '{self.name}'")
             for x in containers:
                 x.remove()
 
@@ -271,7 +271,7 @@ class ConstellationContainerCollection:
         for x in self.collection:
             if x.name == name:
                 return x
-        raise Exception("Container '{}' not defined".format(name))
+        raise Exception(f"Container '{name}' not defined")
 
     def get(self, name, prefix):
         return self.find(name).get(prefix)
@@ -325,7 +325,7 @@ class ConstellationVolumeCollection:
         for x in self.collection:
             if x.role == role:
                 return x.name
-        raise Exception("Mount with role '{}' not defined".format(role))
+        raise Exception(f"Mount with role '{role}' not defined")
 
     def create(self):
         for vol in self.collection:

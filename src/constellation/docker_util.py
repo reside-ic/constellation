@@ -12,7 +12,7 @@ def ensure_network(name):
     try:
         client.networks.get(name)
     except docker.errors.NotFound:
-        print("Creating docker network '{}'".format(name))
+        print(f"Creating docker network '{name}'")
         client.networks.create(name)
 
 
@@ -21,7 +21,7 @@ def ensure_volume(name):
     try:
         client.volumes.get(name)
     except docker.errors.NotFound:
-        print("Creating docker volume '{}'".format(name))
+        print(f"Creating docker volume '{name}'")
         client.volumes.create(name)
 
 
@@ -50,7 +50,7 @@ def remove_network(name):
         nw = client.networks.get(name)
     except docker.errors.NotFound:
         return
-    print("Removing network '{}'".format(name))
+    print(f"Removing network '{name}'")
     nw.remove()
 
 
@@ -60,14 +60,14 @@ def remove_volume(name):
         v = client.volumes.get(name)
     except docker.errors.NotFound:
         return
-    print("Removing volume '{}'".format(name))
+    print(f"Removing volume '{name}'")
     v.remove(name)
 
 
 def container_stop(container, kill, name):
     if container and container.status == "running":
         action = "Killing" if kill else "Stop"
-        print("{} '{}'".format(action, name))
+        print(f"{action} '{name}'")
         with ignoring_missing():
             if kill:
                 container.kill()
@@ -109,17 +109,15 @@ def container_wait_running(container, poll=0.1, timeout=1):
         container.reload()
     if container.status != "running":
         raise Exception(
-            "container '{}' ({}) is not running ({})".format(
-                container.name, container.id[:8], container.status
-            )
+            f"container '{container.name}' ({container.id[:8]}) "
+            "is not running ({container.status})"
         )
     time.sleep(timeout)
     container.reload()
     if container.status != "running":
         raise Exception(
-            "container '{}' ({}) was running but is now {}".format(
-                container.name, container.id[:8], container.status
-            )
+            f"container '{container.name}' ({container.id[:8]}) "
+            "was running but is now {container.status}"
         )
     return container
 
@@ -138,7 +136,7 @@ def container_remove_wait(container, poll=0.1, timeout=1):
             return
         time.sleep(poll)
 
-    raise Exception("container '{}' was not removed in time".format(name))
+    raise Exception(f"container '{name}' was not removed in time")
 
 
 def simple_tar(path, name):
@@ -206,14 +204,14 @@ def bytes_from_container(container, path):
 # https://docker-py.readthedocs.io/en/stable/images.html
 def image_pull(name, ref):
     client = docker.client.from_env()
-    print("Pulling docker image {} ({})".format(name, ref))
+    print(f"Pulling docker image {name} ({ref})")
     try:
         prev = client.images.get(ref).short_id
     except docker.errors.NotFound:
         prev = None
     curr = client.images.pull(ref).short_id
     status = "unchanged" if prev == curr else "updated"
-    print("    `-> {} ({})".format(curr, status))
+    print(f"    `-> {curr} ({status})")
     return prev != curr
 
 
