@@ -202,7 +202,7 @@ def test_container_start_stop_remove():
 
 
 def test_container_start_configure():
-    def configure(container, data):
+    def configure(container, data):  # noqa: ARG001
         docker_util.string_into_container("hello\n", container, "/hello")
 
     try:
@@ -288,7 +288,7 @@ def test_constellation():
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
 
-    def cfg_client(container, data):
+    def cfg_client(container, data):  # noqa: ARG001
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
 
@@ -352,7 +352,7 @@ def test_constellation_fetches_secrets_on_startup():
                 data["string"], container, "/config"
             )
 
-        def cfg_client(container, data):
+        def cfg_client(container, data):  # noqa: ARG001
             res = container.exec_run(["apk", "add", "--no-cache", "curl"])
             assert res.exit_code == 0
 
@@ -393,7 +393,7 @@ def test_scalable_containers():
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
 
-    def cfg_client(container, data):
+    def cfg_client(container, data):  # noqa: ARG001
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
 
@@ -438,7 +438,7 @@ def test_start_subset():
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
 
-    def cfg_client(container, data):
+    def cfg_client(container, data):  # noqa: ARG001
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
 
@@ -467,7 +467,7 @@ def test_restart_pulls_and_replaces_containers():
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
 
-    def cfg_client(container, data):
+    def cfg_client(container, data):  # noqa: ARG001
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
 
@@ -513,12 +513,12 @@ def test_can_preconfigure_constellation_containers():
     ref_container = ImageReference("library", "alpine", "latest")
     arg_container = ["sleep", "1000"]
 
-    def precfg_container(container, data):
+    def precfg_container(container, data):  # noqa: ARG001
         docker_util.string_into_container(
             "test string", container, "./test.txt"
         )
 
-    def cfg_container(container, data):
+    def cfg_container(container, data):  # noqa: ARG001
         res = container.exec_run(["cat", "test.txt"])
         assert res.output.decode("utf-8") == "test string"
 
