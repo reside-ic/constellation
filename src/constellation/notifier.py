@@ -29,7 +29,7 @@ class Notifier:
         error = None
         try:
             r = requests.post(self.url, data=data, headers=self.headers)
-            if r.status_code >= 300:
+            if r.status_code >= 300:  # noqa: PLR2004
                 error = r.reason
         except Exception as e:
             error = str(e)
