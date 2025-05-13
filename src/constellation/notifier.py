@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 
 class Notifier:
@@ -7,7 +8,7 @@ class Notifier:
         self.enabled = webhook is not None
         if self.enabled:
             self.url = webhook
-            self.headers = {'Content-Type': 'application/json'}
+            self.headers = {"Content-Type": "application/json"}
 
     def post(self, message):
         if not self.enabled:
@@ -28,11 +29,13 @@ class Notifier:
         error = None
         try:
             r = requests.post(self.url, data=data, headers=self.headers)
-            if r.status_code >= 300:
+            # Ignore "magic number" 300 here for non-successful HTTP
+            # return code
+            if r.status_code >= 300:  # noqa: PLR2004
                 error = r.reason
         except Exception as e:
             error = str(e)
 
         if error:
             self.enabled = False
-            print("Problem sending the slack message:\n{}".format(error))
+            print(f"Problem sending the slack message:\n{error}")

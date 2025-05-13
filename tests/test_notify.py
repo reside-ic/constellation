@@ -1,10 +1,9 @@
 import io
 import json
-import pytest
-import requests
-
 from contextlib import redirect_stdout
 from unittest import mock
+
+import requests
 
 from constellation.notifier import Notifier
 
@@ -21,7 +20,7 @@ def test_notifier_can_post():
     message = "hello"
     obj = Notifier(url)
     assert obj.enabled
-    assert obj.headers == {'Content-Type': 'application/json'}
+    assert obj.headers == {"Content-Type": "application/json"}
     ret = mock.Mock(spec=requests.Response)
     ret.status_code = 200
     with mock.patch("requests.post", return_value=ret) as requests_post:
@@ -41,7 +40,7 @@ def test_notifier_gracefully_handles_http_error():
     ret.reason = "not found"
 
     f = io.StringIO()
-    with mock.patch("requests.post", return_value=ret) as requests_post:
+    with mock.patch("requests.post", return_value=ret):
         with redirect_stdout(f):
             obj.post(message)
 

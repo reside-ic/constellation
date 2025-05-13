@@ -1,9 +1,26 @@
 import os
-import pytest
-
+import tempfile
 from unittest import mock
 
-from constellation.config import *
+import pytest
+
+from constellation import vault
+from constellation.config import (
+    collapse,
+    combine,
+    config_boolean,
+    config_build,
+    config_dict,
+    config_dict_strict,
+    config_enum,
+    config_image_reference,
+    config_integer,
+    config_list,
+    config_string,
+    config_vault,
+    parse_env_vars,
+    read_yaml,
+)
 
 sample_data = {
     "a": "value1",
@@ -124,7 +141,7 @@ def test_config_vault():
         }
     }
     value = config_vault(data, ["vault"])
-    assert isinstance(value, vault.vault_config)
+    assert isinstance(value, vault.VaultConfig)
     assert value.url == "https://example.com/vault"
     assert value.auth_method == "github"
     assert value.auth_args == {"token": "mytoken"}
@@ -168,7 +185,6 @@ def test_config_read_env_var_error():
         f.seek(0)
         with pytest.raises(KeyError):
             read_yaml(f.name)
-            dat = read_yaml(f.name)
 
 
 def test_combine():

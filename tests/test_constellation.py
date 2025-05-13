@@ -1,17 +1,30 @@
-import docker
 import io
+from contextlib import redirect_stdout
+
+import docker
 import pytest
 import vault_dev
 
-from contextlib import redirect_stdout
+from constellation.constellation import (
+    Constellation,
+    ConstellationBindMount,
+    ConstellationContainer,
+    ConstellationContainerCollection,
+    ConstellationNetwork,
+    ConstellationService,
+    ConstellationVolume,
+    ConstellationVolumeCollection,
+    ConstellationVolumeMount,
+    container_ports,
+    docker_util,
+    port_config,
+    vault,
+)
+from constellation.util import ImageReference, rand_str
 
-import constellation
-from constellation.constellation import *
-from constellation.util import ImageReference
 
-
-def rand_str(n=10, prefix="constellation-"):
-    return constellation.util.rand_str(n, prefix)
+def constellation_rand_str(n=10, prefix="constellation-"):
+    return rand_str(n, prefix)
 
 
 def test_ports_create_port_config_and_container_ports():
@@ -29,7 +42,7 @@ def test_ports_create_port_config_and_container_ports():
 
 
 def test_network():
-    name = rand_str()
+    name = constellation_rand_str()
     nw = ConstellationNetwork(name)
     assert not nw.exists()
     nw.create()
@@ -40,7 +53,7 @@ def test_network():
 
 
 def test_volume():
-    name = rand_str()
+    name = constellation_rand_str()
     role = "role"
     vol = ConstellationVolume(role, name)
     assert not vol.exists()
@@ -54,8 +67,8 @@ def test_volume():
 def test_volume_collection():
     role1 = "role1"
     role2 = "role2"
-    name1 = rand_str()
-    name2 = rand_str()
+    name1 = constellation_rand_str()
+    name2 = constellation_rand_str()
     vols = ConstellationVolumeCollection({role1: name1, role2: name2})
 
     assert vols.get(role1) == name1
@@ -91,8 +104,8 @@ def test_volume_mount_with_relative_paths():
 def test_volume_mount_with_no_args():
     role1 = "role1"
     role2 = "role2"
-    name1 = rand_str()
-    name2 = rand_str()
+    name1 = constellation_rand_str()
+    name2 = constellation_rand_str()
     vols = ConstellationVolumeCollection({role1: name1, role2: name2})
 
     absolute_target_path = "/target_path"
@@ -108,8 +121,8 @@ def test_volume_mount_with_no_args():
 def test_volume_mount_with_args():
     role1 = "role1"
     role2 = "role2"
-    name1 = rand_str()
-    name2 = rand_str()
+    name1 = constellation_rand_str()
+    name2 = constellation_rand_str()
     vols = ConstellationVolumeCollection({role1: name1, role2: name2})
 
     absolute_target_path = "/target_path"
@@ -136,8 +149,8 @@ def test_bind_mount_with_relative_paths():
 def test_bind_mount_with_no_args():
     role1 = "role1"
     role2 = "role2"
-    name1 = rand_str()
-    name2 = rand_str()
+    name1 = constellation_rand_str()
+    name2 = constellation_rand_str()
     # Creat volume collection so that we can test the interface of to_mount
     vols = ConstellationVolumeCollection({role1: name1, role2: name2})
 
@@ -153,8 +166,8 @@ def test_bind_mount_with_no_args():
 def test_bind_mount_with_args():
     role1 = "role1"
     role2 = "role2"
-    name1 = rand_str()
-    name2 = rand_str()
+    name1 = constellation_rand_str()
+    name2 = constellation_rand_str()
     vols = ConstellationVolumeCollection({role1: name1, role2: name2})
 
     m = ConstellationBindMount("/source_path", "/target_path", read_only=True)
@@ -167,11 +180,11 @@ def test_bind_mount_with_args():
 
 
 def test_container_simple():
-    nm = rand_str(prefix="")
+    nm = rand_str(n=10, prefix="")
     cl = docker.client.from_env()
     cl.images.pull("library/redis:5.0")
     x = ConstellationContainer(nm, "library/redis:5.0")
-    assert x.name_external("prefix") == "prefix-{}".format(nm)
+    assert x.name_external("prefix") == f"prefix-{nm}"
     assert not x.exists("prefix")
     assert x.get("prefix") is None
     f = io.StringIO()
@@ -183,11 +196,11 @@ def test_container_simple():
 
 
 def test_container_start_stop_remove():
-    nm = rand_str(prefix="")
+    nm = rand_str(n=10, prefix="")
     cl = docker.client.from_env()
     cl.images.pull("library/redis:5.0")
     x = ConstellationContainer(nm, "library/redis:5.0")
-    nw = ConstellationNetwork(rand_str())
+    nw = ConstellationNetwork(constellation_rand_str())
     try:
         nw.create()
         x.start("prefix", nw, None)
@@ -202,15 +215,15 @@ def test_container_start_stop_remove():
 
 
 def test_container_start_configure():
-    def configure(container, data):
+    def configure(container, _data):
         docker_util.string_into_container("hello\n", container, "/hello")
 
     try:
-        nm = rand_str(prefix="")
+        nm = rand_str(n=10, prefix="")
         cl = docker.client.from_env()
         cl.images.pull("library/redis:5.0")
         x = ConstellationContainer(nm, "library/redis:5.0", configure=configure)
-        nw = ConstellationNetwork(rand_str())
+        nw = ConstellationNetwork(constellation_rand_str())
         nw.create()
         x.start("prefix", nw, None)
         s = docker_util.string_from_container(x.get("prefix"), "/hello")
@@ -222,13 +235,13 @@ def test_container_start_configure():
 
 def test_container_ports():
     try:
-        nm = rand_str(prefix="")
+        nm = rand_str(n=10, prefix="")
         cl = docker.client.from_env()
         cl.images.pull("library/alpine:latest")
         x = ConstellationContainer(
             nm, "library/alpine:latest", ports=[80, (3000, 8080)]
         )
-        nw = ConstellationNetwork(rand_str())
+        nw = ConstellationNetwork(constellation_rand_str())
         nw.create()
         x.start("prefix", nw, None)
         container_config = cl.api.inspect_container(f"prefix-{nm}")
@@ -253,8 +266,8 @@ def test_container_pull():
 
 def test_container_collection():
     ref = "library/redis:5.0"
-    prefix = rand_str()
-    nw = ConstellationNetwork(rand_str())
+    prefix = constellation_rand_str()
+    nw = ConstellationNetwork(constellation_rand_str())
     nw.create()
     cl = docker.client.from_env()
     cl.images.pull("library/redis:5.0")
@@ -271,7 +284,7 @@ def test_container_collection():
     obj.start(prefix, nw, [])
 
     cl = obj.get("client", prefix)
-    assert cl.name == "{}-client".format(prefix)
+    assert cl.name == f"{prefix}-client"
     assert obj.exists(prefix) == [True, True]
     obj.stop(prefix)
     obj.remove(prefix)
@@ -281,14 +294,14 @@ def test_container_collection():
 def test_constellation():
     """Bring up a simple constellation and verify that it works"""
     name = "mything"
-    prefix = rand_str()
+    prefix = constellation_rand_str()
     network = "thenw"
     volumes = {"data": "mydata"}
     ref_server = ImageReference("library", "nginx", "latest")
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
 
-    def cfg_client(container, data):
+    def cfg_client(container, _data):
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
 
@@ -307,7 +320,7 @@ def test_constellation():
 
     assert "Network:\n    - thenw: missing" in p
     assert "Volumes:\n    - data (mydata): missing" in p
-    assert "Containers:\n    - server ({}-server): missing".format(prefix) in p
+    assert f"Containers:\n    - server ({prefix}-server): missing" in p
 
     obj.start(True)
 
@@ -319,7 +332,7 @@ def test_constellation():
 
     assert "Network:\n    - thenw: created" in p
     assert "Volumes:\n    - data (mydata): created" in p
-    assert "Containers:\n    - server ({}-server): running".format(prefix) in p
+    assert f"Containers:\n    - server ({prefix}-server): running" in p
 
     x = obj.containers.get("client", prefix)
     response = docker_util.exec_safely(x, ["curl", "http://server"])
@@ -333,7 +346,7 @@ def test_constellation():
 
 def test_constellation_fetches_secrets_on_startup():
     name = "mything"
-    prefix = rand_str()
+    prefix = constellation_rand_str()
     network = "thenw"
     volumes = {"data": "mydata"}
     ref_server = ImageReference("library", "nginx", "latest")
@@ -341,22 +354,21 @@ def test_constellation_fetches_secrets_on_startup():
     arg_client = ["sleep", "1000"]
     data = {"string": "VAULT:secret/foo:value"}
 
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         vault_client = s.client()
-        vault_url = vault_client.url
-        secret = rand_str()
+        secret = constellation_rand_str()
         vault_client.write("secret/foo", value=secret)
 
         def cfg_server(container, data):
-            res = docker_util.string_into_container(
+            docker_util.string_into_container(
                 data["string"], container, "/config"
             )
 
-        def cfg_client(container, data):
+        def cfg_client(container, _data):
             res = container.exec_run(["apk", "add", "--no-cache", "curl"])
             assert res.exit_code == 0
 
-        vault_config = vault.vault_config(
+        vault_config = vault.VaultConfig(
             vault_client.url, "token", {"token": s.token}
         )
 
@@ -386,14 +398,14 @@ def test_constellation_fetches_secrets_on_startup():
 
 def test_scalable_containers():
     name = "mything"
-    prefix = rand_str()
+    prefix = constellation_rand_str()
     network = "thenw"
     volumes = {"data": "mydata"}
     ref_server = ImageReference("library", "nginx", "latest")
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
 
-    def cfg_client(container, data):
+    def cfg_client(container, _data):
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
 
@@ -422,7 +434,7 @@ def test_scalable_containers():
 
     for i in range(4):
         x = containers[i]
-        assert x.name.startswith("{}-client-".format(prefix))
+        assert x.name.startswith(f"{prefix}-client-")
         response = docker_util.exec_safely(x, ["curl", "http://server"])
         assert "Welcome to nginx" in response.output.decode("UTF-8")
 
@@ -431,14 +443,14 @@ def test_scalable_containers():
 
 def test_start_subset():
     name = "mything"
-    prefix = rand_str()
+    prefix = constellation_rand_str()
     network = "thenw"
     volumes = {"data": "mydata"}
     ref_server = ImageReference("library", "nginx", "latest")
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
 
-    def cfg_client(container, data):
+    def cfg_client(container, _data):
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
 
@@ -460,14 +472,14 @@ def test_start_subset():
 
 def test_restart_pulls_and_replaces_containers():
     name = "mything"
-    prefix = rand_str()
+    prefix = constellation_rand_str()
     network = "thenw"
     volumes = {"data": "mydata"}
     ref_server = ImageReference("library", "nginx", "latest")
     ref_client = ImageReference("library", "alpine", "latest")
     arg_client = ["sleep", "1000"]
 
-    def cfg_client(container, data):
+    def cfg_client(container, _data):
         res = container.exec_run(["apk", "add", "--no-cache", "curl"])
         assert res.exit_code == 0
 
@@ -495,8 +507,8 @@ def test_restart_pulls_and_replaces_containers():
         "Stop 'client'",
         "Removing 'server'",
         "Removing 'client'",
-        'Starting server (library/nginx:latest)',
-        'Starting client (library/alpine:latest)',
+        "Starting server (library/nginx:latest)",
+        "Starting client (library/alpine:latest)",
     ]
 
     assert obj.containers.get("server", obj.prefix).id != id_server
@@ -507,18 +519,18 @@ def test_restart_pulls_and_replaces_containers():
 
 def test_can_preconfigure_constellation_containers():
     name = "mything"
-    prefix = rand_str()
+    prefix = constellation_rand_str()
     network = "thenw"
     volumes = {"data": "mydata"}
     ref_container = ImageReference("library", "alpine", "latest")
     arg_container = ["sleep", "1000"]
 
-    def precfg_container(container, data):
+    def precfg_container(container, _data):
         docker_util.string_into_container(
             "test string", container, "./test.txt"
         )
 
-    def cfg_container(container, data):
+    def cfg_container(container, _data):
         res = container.exec_run(["cat", "test.txt"])
         assert res.output.decode("utf-8") == "test string"
 

@@ -1,12 +1,11 @@
 from abc import abstractmethod
+from pathlib import Path
 from typing import Optional
+
 import docker
 
-import constellation.docker_util as docker_util
-import constellation.vault as vault
-
-from constellation.util import tabulate, rand_str
-from pathlib import Path
+from constellation import docker_util, vault
+from constellation.util import rand_str, tabulate
 
 
 class Constellation:
@@ -43,24 +42,25 @@ class Constellation:
         nw_status = (
             "created" if docker_util.network_exists(nw_name) else "missing"
         )
-        print("Constellation {}".format(self.name))
+        print(f"Constellation {self.name}")
         print("  * Network:")
-        print("    - {}: {}".format(nw_name, nw_status))
+        print(f"    - {nw_name}: {nw_status}")
         print("  * Volumes:")
         for v in self.volumes.collection:
             v_status = (
                 "created" if docker_util.volume_exists(v.name) else "missing"
             )
-            print("    - {} ({}): {}".format(v.role, v.name, v_status))
+            print(f"    - {v.role} ({v.name}): {v_status}")
         print("  * Containers:")
         for x in self.containers.collection:
             x_name = x.name_external(self.prefix)
             x_status = x.status(self.prefix)
-            print("    - {} ({}): {}".format(x.name, x_name, x_status))
+            print(f"    - {x.name} ({x_name}): {x_status}")
 
     def start(self, pull_images=False, subset=None):
         if subset is None and any(self.containers.exists(self.prefix)):
-            raise Exception("Some containers exist")
+            msg = "Some containers exist"
+            raise Exception(msg)
         if self.vault_config:
             vault.resolve_secrets(self.data, self.vault_config.client())
         if pull_images:
@@ -99,7 +99,8 @@ class _ConstellationMount:
 
     def _assert_absolute_path(self, path):
         if not Path(path).is_absolute():
-            raise ValueError(f"Path '{path}' must be an absolute path.")
+            msg = f"Path '{path}' must be an absolute path."
+            raise ValueError(msg)
 
 
 class ConstellationContainer:
@@ -142,7 +143,7 @@ class ConstellationContainer:
         self.network = network
 
     def name_external(self, prefix):
-        return "{}-{}".format(prefix, self.name)
+        return f"{prefix}-{self.name}"
 
     def pull_image(self):
         docker_util.image_pull(self.name, str(self.image))
@@ -153,7 +154,7 @@ class ConstellationContainer:
     def start(self, prefix, network, volumes, data=None):
         cl = docker.client.from_env()
         nm = self.name_external(prefix)
-        print("Starting {} ({})".format(self.name, str(self.image)))
+        print(f"Starting {self.name} ({self.image!s})")
         mounts = [x.to_mount(volumes) for x in self.mounts]
 
         if self.ports_config:
@@ -209,7 +210,7 @@ class ConstellationContainer:
     def remove(self, prefix):
         container = self.get(prefix)
         if container:
-            print("Removing '{}'".format(self.name))
+            print(f"Removing '{self.name}'")
             with docker_util.ignoring_missing():
                 container.remove()
 
@@ -225,7 +226,7 @@ class ConstellationService:
         self.base = ConstellationContainer(name, image, **kwargs)
 
     def name_external(self, prefix):
-        return "{}-<i>".format(self.base.name_external(prefix))
+        return f"{self.base.name_external(prefix)}-<i>"
 
     def pull_image(self):
         self.base.pull_image()
@@ -234,9 +235,9 @@ class ConstellationService:
         return bool(self.get(prefix))
 
     def start(self, prefix, network, volumes, data=None):
-        print("Starting *service* {}".format(self.name))
-        for i in range(self.scale):
-            name = "{}-{}".format(self.name, rand_str(8))
+        print(f"Starting *service* {self.name}")
+        for _i in range(self.scale):
+            name = f"{self.name}-{rand_str(8)}"
             container = ConstellationContainer(name, self.image, **self.kwargs)
             container.start(prefix, network, volumes, data)
 
@@ -247,7 +248,7 @@ class ConstellationService:
     def status(self, prefix):
         status = tabulate([x.status for x in self.get(prefix)])
         if status:
-            ret = ", ".join(["{} ({})".format(k, v) for k, v in status.items()])
+            ret = ", ".join([f"{k} ({v})" for k, v in status.items()])
         else:
             ret = "missing"
         return ret
@@ -259,7 +260,7 @@ class ConstellationService:
     def remove(self, prefix):
         containers = self.get(prefix, True)
         if containers:
-            print("Removing '{}'".format(self.name))
+            print(f"Removing '{self.name}'")
             for x in containers:
                 x.remove()
 
@@ -272,9 +273,10 @@ class ConstellationContainerCollection:
         for x in self.collection:
             if x.name == name:
                 return x
-        raise Exception("Container '{}' not defined".format(name))
+        msg = f"Container '{name}' not defined"
+        raise Exception(msg)
 
-    def get(self, name, prefix, container=True):
+    def get(self, name, prefix):
         return self.find(name).get(prefix)
 
     def exists(self, prefix):
@@ -326,7 +328,8 @@ class ConstellationVolumeCollection:
         for x in self.collection:
             if x.role == role:
                 return x.name
-        raise Exception("Mount with role '{}' not defined".format(role))
+        msg = f"Mount with role '{role}' not defined"
+        raise Exception(msg)
 
     def create(self):
         for vol in self.collection:
@@ -388,7 +391,7 @@ def port_config(ports):
     if not ports:
         return None
     tuple_ports = [int_into_tuple(p) for p in ports]
-    return {k: v for k, v in tuple_ports}
+    return dict(tuple_ports)
 
 
 def container_ports(ports):

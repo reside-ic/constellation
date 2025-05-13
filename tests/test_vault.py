@@ -1,14 +1,21 @@
-import pytest
-
+import os
 from unittest import mock
 
+import pytest
 import vault_dev
 
-from constellation.vault import *
+from constellation.vault import (
+    VaultConfig,
+    VaultNotEnabled,
+    drop_envvar,
+    get_github_token,
+    resolve_secret,
+    resolve_secrets,
+)
 
 
 def test_secret_reading():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
         assert resolve_secret("foo", client) == (False, "foo")
@@ -19,7 +26,7 @@ def test_secret_reading():
 
 
 def test_secret_reading_of_dicts():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
         # With data
@@ -33,7 +40,7 @@ def test_secret_reading_of_dicts():
 
 
 def test_secret_reading_of_dicts_recursive():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
         # With data
@@ -47,7 +54,7 @@ def test_secret_reading_of_dicts_recursive():
 
 
 def test_secret_reading_of_objects():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
 
@@ -65,7 +72,7 @@ def test_secret_reading_of_objects():
 
 
 def test_accessor_validation():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         with pytest.raises(Exception, match="Invalid vault accessor"):
             resolve_secret("VAULT:invalid", client)
@@ -74,7 +81,7 @@ def test_accessor_validation():
 
 
 def test_error_for_missing_secret():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         msg = "Did not find secret at 'secret/foo'"
         with pytest.raises(Exception, match=msg):
@@ -82,7 +89,7 @@ def test_error_for_missing_secret():
 
 
 def test_error_for_missing_secret_key():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
         msg = "Did not find key 'bar' at secret path 'secret/foo'"
@@ -91,17 +98,17 @@ def test_error_for_missing_secret_key():
 
 
 def test_vault_config():
-    with vault_dev.server() as s:
-        url = "http://localhost:{}".format(s.port)
-        cfg = vault_config(url, "token", {"token": s.token})
+    with vault_dev.Server() as s:
+        url = f"http://localhost:{s.port}"
+        cfg = VaultConfig(url, "token", {"token": s.token})
         cl = cfg.client()
         assert cl.is_authenticated()
 
 
 def test_vault_config_when_missing():
-    cfg = vault_config(None, "token", {"token": "root"})
+    cfg = VaultConfig(None, "token", {"token": "root"})
     cl = cfg.client()
-    assert isinstance(cl, vault_not_enabled)
+    assert isinstance(cl, VaultNotEnabled)
     with pytest.raises(Exception, match="Vault access is not enabled"):
         cl.read("secret/foo")
 
@@ -115,41 +122,41 @@ def test_vault_config_when_missing():
 def test_vault_config_login():
     pytest.skip(
         "Skipping test temporary, ticket to resolve this:"
-        + "https://mrc-ide.myjetbrains.com/youtrack/issue"
-        + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
+        "https://mrc-ide.myjetbrains.com/youtrack/issue"
+        "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
     )
 
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         cl = s.client()
         cl.sys.enable_auth_method(method_type="github")
         cl.write("auth/github/config", organization="vimc")
 
-        url = "http://localhost:{}".format(s.port)
+        url = f"http://localhost:{s.port}"
         token = os.environ["VAULT_TEST_GITHUB_PAT"]
-        cfg = vault_config(url, "github", {"token": token})
+        cfg = VaultConfig(url, "github", {"token": token})
         assert cfg.client().is_authenticated()
 
 
 def test_vault_config_login_no_args():
     pytest.skip(
         "Skipping test temporary, ticket to resolve this:"
-        + "https://mrc-ide.myjetbrains.com/youtrack/issue"
-        + "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
+        "https://mrc-ide.myjetbrains.com/youtrack/issue"
+        "/RESIDE-351/Vault-login-testing-with-GitHub-authentication"
     )
 
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
 
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         cl = s.client()
         cl.sys.enable_auth_method(method_type="github")
         cl.write("auth/github/config", organization="vimc")
-        url = "http://localhost:{}".format(s.port)
+        url = f"http://localhost:{s.port}"
         token = os.environ["VAULT_TEST_GITHUB_PAT"]
         with mock.patch.dict(os.environ, {"VAULT_AUTH_GITHUB_TOKEN": token}):
-            cfg = vault_config(url, "github", None)
+            cfg = VaultConfig(url, "github", None)
             assert cfg.client().is_authenticated()
 
 

@@ -1,11 +1,30 @@
-import base64
 import io
-import pytest
 import tempfile
-
 from contextlib import redirect_stdout
 
-from constellation.docker_util import *
+import docker
+import pytest
+
+from constellation.docker_util import (
+    bytes_from_container,
+    container_exists,
+    container_remove_wait,
+    container_wait_running,
+    ensure_network,
+    ensure_volume,
+    exec_safely,
+    file_into_container,
+    ignoring_missing,
+    image_exists,
+    image_pull,
+    network_exists,
+    remove_network,
+    remove_volume,
+    return_logs_and_remove,
+    string_from_container,
+    string_into_container,
+    volume_exists,
+)
 
 
 def test_exec_returns_output():
@@ -23,7 +42,7 @@ def test_exec_safely_throws_on_failure():
     container = cl.containers.run(
         "alpine", ["sleep", "10"], detach=True, auto_remove=True
     )
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match=""):
         exec_safely(container, "missing_command")
     container.kill()
 
@@ -50,7 +69,7 @@ def test_remove_network_removes_network():
     with redirect_stdout(f):
         remove_network(name)
 
-    assert f.getvalue() == "Removing network '{}'\n".format(name)
+    assert f.getvalue() == f"Removing network '{name}'\n"
     assert name not in [x.name for x in cl.networks.list()]
 
 
@@ -75,7 +94,7 @@ def test_remove_volume_removes_volume():
     with redirect_stdout(f):
         remove_volume(name)
 
-    assert f.getvalue() == "Removing volume '{}'\n".format(name)
+    assert f.getvalue() == f"Removing volume '{name}'\n"
     assert name not in [x.name for x in cl.volumes.list()]
 
 
@@ -127,7 +146,7 @@ def test_file_into_container():
         "alpine", ["sleep", "20"], detach=True, auto_remove=True
     )
     # part of a PNG - doesn't really matter, so long as it's binary:
-    content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
+    content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
     with tempfile.NamedTemporaryFile() as f:
         f.write(content)
         f.seek(0)

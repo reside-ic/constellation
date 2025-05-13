@@ -10,16 +10,17 @@ def resolve_secret(value, client):
         return False, value
     m = re_vault.match(value)
     if not m:
-        raise Exception("Invalid vault accessor '{}'".format(value))
+        msg = f"Invalid vault accessor '{value}'"
+        raise Exception(msg)
     path, key = m.groups()
     data = client.read(path)
     if not data:
-        raise Exception("Did not find secret at '{}'".format(path))
+        msg = f"Did not find secret at '{path}'"
+        raise Exception(msg)
 
     if key not in data["data"]:
-        raise Exception(
-            "Did not find key '{}' at secret path '{}'".format(key, path)
-        )
+        msg = f"Did not find key '{key}' at secret path '{path}'"
+        raise Exception(msg)
     return True, data["data"][key]
 
 
@@ -35,9 +36,9 @@ def resolve_secrets(x, client):
 def resolve_secrets_object(obj, client):
     for k, v in vars(obj).items():
         if isinstance(v, str):
-            updated, v = resolve_secret(v, client)
+            updated, value = resolve_secret(v, client)
             if updated:
-                setattr(obj, k, v)
+                setattr(obj, k, value)
         if isinstance(v, dict):
             resolve_secrets_dict(v, client)
 
@@ -48,14 +49,14 @@ def resolve_secrets_dict(d, client):
         v,
     ) in d.items():
         if isinstance(v, str):
-            updated, v = resolve_secret(v, client)
+            updated, value = resolve_secret(v, client)
             if updated:
-                d[k] = v
+                d[k] = value
         elif isinstance(v, dict):
             resolve_secrets_dict(v, client)
 
 
-class vault_config:
+class VaultConfig:
     def __init__(self, url, auth_method, auth_args):
         self.url = url
         self.auth_method = auth_method
@@ -63,7 +64,7 @@ class vault_config:
 
     def client(self):
         if not self.url:
-            return vault_not_enabled()
+            return VaultNotEnabled()
         # NOTE: we might actually try and pick up VAULT_TOKEN from the
         # environment, but can't let that value override any value
         # passed here.
@@ -75,11 +76,7 @@ class vault_config:
             cl = hvac.Client(url=self.url, token=self.auth_args["token"])
         else:
             cl = hvac.Client(url=self.url)
-            print(
-                "Authenticating with the vault using '{}'".format(
-                    self.auth_method
-                )
-            )
+            print(f"Authenticating with the vault using '{self.auth_method}'")
 
             if self.auth_method == "github":
                 if not self.auth_args:
@@ -91,9 +88,10 @@ class vault_config:
         return cl
 
 
-class vault_not_enabled:
+class VaultNotEnabled:
     def __getattr__(self, name):
-        raise Exception("Vault access is not enabled")
+        msg = "Vault access is not enabled"
+        raise Exception(msg)
 
 
 def get_github_token():

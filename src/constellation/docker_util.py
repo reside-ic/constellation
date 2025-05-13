@@ -12,7 +12,7 @@ def ensure_network(name):
     try:
         client.networks.get(name)
     except docker.errors.NotFound:
-        print("Creating docker network '{}'".format(name))
+        print(f"Creating docker network '{name}'")
         client.networks.create(name)
 
 
@@ -21,7 +21,7 @@ def ensure_volume(name):
     try:
         client.volumes.get(name)
     except docker.errors.NotFound:
-        print("Creating docker volume '{}'".format(name))
+        print(f"Creating docker volume '{name}'")
         client.volumes.create(name)
 
 
@@ -29,7 +29,8 @@ def exec_safely(container, args, **kwargs):
     ans = container.exec_run(args, **kwargs)
     if ans[0] != 0:
         print(ans[1].decode("UTF-8"))
-        raise Exception("Error running command (see above for log)")
+        msg = "Error running command (see above for log)"
+        raise Exception(msg)
     return ans
 
 
@@ -50,7 +51,7 @@ def remove_network(name):
         nw = client.networks.get(name)
     except docker.errors.NotFound:
         return
-    print("Removing network '{}'".format(name))
+    print(f"Removing network '{name}'")
     nw.remove()
 
 
@@ -60,14 +61,14 @@ def remove_volume(name):
         v = client.volumes.get(name)
     except docker.errors.NotFound:
         return
-    print("Removing volume '{}'".format(name))
+    print(f"Removing volume '{name}'")
     v.remove(name)
 
 
 def container_stop(container, kill, name):
     if container and container.status == "running":
         action = "Killing" if kill else "Stop"
-        print("{} '{}'".format(action, name))
+        print(f"{action} '{name}'")
         with ignoring_missing():
             if kill:
                 container.kill()
@@ -102,43 +103,44 @@ def docker_exists(collection, name):
 
 # https://medium.com/@nagarwal/lifecycle-of-docker-container-d2da9f85959
 def container_wait_running(container, poll=0.1, timeout=1):
-    for i in range(math.ceil(timeout / poll)):
+    for _i in range(math.ceil(timeout / poll)):
         if container.status != "created":
             break
         time.sleep(poll)
         container.reload()
     if container.status != "running":
-        raise Exception(
-            "container '{}' ({}) is not running ({})".format(
-                container.name, container.id[:8], container.status
-            )
+        msg = (
+            f"container '{container.name}' ({container.id[:8]}) "
+            f"is not running ({container.status})"
         )
+        raise Exception(msg)
     time.sleep(timeout)
     container.reload()
     if container.status != "running":
-        raise Exception(
-            "container '{}' ({}) was running but is now {}".format(
-                container.name, container.id[:8], container.status
-            )
+        msg = (
+            f"container '{container.name}' ({container.id[:8]}) "
+            f"was running but is now {container.status}"
         )
+        raise Exception(msg)
     return container
 
 
 def container_remove_wait(container, poll=0.1, timeout=1):
     name = container.name
-    for i in range(math.ceil(timeout / poll)):
+    for _i in range(math.ceil(timeout / poll)):
         try:
             container.remove()
         except docker.errors.APIError:
             pass
         time.sleep(poll)
 
-    for i in range(math.ceil(timeout / poll)):
+    for _i in range(math.ceil(timeout / poll)):
         if not container_exists(name):
             return
         time.sleep(poll)
 
-    raise Exception("container '{}' was not removed in time".format(name))
+    msg = f"container '{name}' was not removed in time"
+    raise Exception(msg)
 
 
 def simple_tar(path, name):
@@ -206,14 +208,14 @@ def bytes_from_container(container, path):
 # https://docker-py.readthedocs.io/en/stable/images.html
 def image_pull(name, ref):
     client = docker.client.from_env()
-    print("Pulling docker image {} ({})".format(name, ref))
+    print(f"Pulling docker image {name} ({ref})")
     try:
         prev = client.images.get(ref).short_id
     except docker.errors.NotFound:
         prev = None
     curr = client.images.pull(ref).short_id
     status = "unchanged" if prev == curr else "updated"
-    print("    `-> {} ({})".format(curr, status))
+    print(f"    `-> {curr} ({status})")
     return prev != curr
 
 
@@ -222,7 +224,11 @@ def containers_matching(prefix, stopped):
     return [x for x in cl.containers.list(stopped) if x.name.startswith(prefix)]
 
 
-class ignoring_missing:
+# this would be more naturally done with something from contextlib
+# rather than a class, so leave as an unconventional name until we
+# refactor later.  This is fairly close in principle to
+# contextlib.suppress() at the moment.
+class ignoring_missing:  # noqa: N801
     def __init__(self):
         pass
 

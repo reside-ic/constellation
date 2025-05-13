@@ -1,6 +1,4 @@
-import pytest
-
-from constellation.util import *
+from constellation.util import ImageReference, tabulate
 
 
 def test_image_reference_can_convert_to_string():

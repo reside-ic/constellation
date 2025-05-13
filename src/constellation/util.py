@@ -9,7 +9,7 @@ class ImageReference:
         self.tag = tag
 
     def __str__(self):
-        return "{}/{}:{}".format(self.repo, self.name, self.tag)
+        return f"{self.repo}/{self.name}:{self.tag}"
 
 
 def tabulate(x):
