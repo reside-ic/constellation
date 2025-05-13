@@ -15,7 +15,7 @@ from constellation.vault import (
 
 
 def test_secret_reading():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
         assert resolve_secret("foo", client) == (False, "foo")
@@ -26,7 +26,7 @@ def test_secret_reading():
 
 
 def test_secret_reading_of_dicts():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
         # With data
@@ -40,7 +40,7 @@ def test_secret_reading_of_dicts():
 
 
 def test_secret_reading_of_dicts_recursive():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
         # With data
@@ -54,7 +54,7 @@ def test_secret_reading_of_dicts_recursive():
 
 
 def test_secret_reading_of_objects():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
 
@@ -72,7 +72,7 @@ def test_secret_reading_of_objects():
 
 
 def test_accessor_validation():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         with pytest.raises(Exception, match="Invalid vault accessor"):
             resolve_secret("VAULT:invalid", client)
@@ -81,7 +81,7 @@ def test_accessor_validation():
 
 
 def test_error_for_missing_secret():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         msg = "Did not find secret at 'secret/foo'"
         with pytest.raises(Exception, match=msg):
@@ -89,7 +89,7 @@ def test_error_for_missing_secret():
 
 
 def test_error_for_missing_secret_key():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         client = s.client()
         client.write("secret/foo", value="s3cret")
         msg = "Did not find key 'bar' at secret path 'secret/foo'"
@@ -98,7 +98,7 @@ def test_error_for_missing_secret_key():
 
 
 def test_vault_config():
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         url = f"http://localhost:{s.port}"
         cfg = VaultConfig(url, "token", {"token": s.token})
         cl = cfg.client()
@@ -128,7 +128,7 @@ def test_vault_config_login():
 
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         cl = s.client()
         cl.sys.enable_auth_method(method_type="github")
         cl.write("auth/github/config", organization="vimc")
@@ -149,7 +149,7 @@ def test_vault_config_login_no_args():
     if "VAULT_TEST_GITHUB_PAT" not in os.environ:
         pytest.skip("VAULT_TEST_GITHUB_PAT is not defined")
 
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         cl = s.client()
         cl.sys.enable_auth_method(method_type="github")
         cl.write("auth/github/config", organization="vimc")

@@ -111,7 +111,7 @@ def container_wait_running(container, poll=0.1, timeout=1):
     if container.status != "running":
         msg = (
             f"container '{container.name}' ({container.id[:8]}) "
-            "is not running ({container.status})"
+            f"is not running ({container.status})"
         )
         raise Exception(msg)
     time.sleep(timeout)
@@ -119,7 +119,7 @@ def container_wait_running(container, poll=0.1, timeout=1):
     if container.status != "running":
         msg = (
             f"container '{container.name}' ({container.id[:8]}) "
-            "was running but is now {container.status}"
+            f"was running but is now {container.status}"
         )
         raise Exception(msg)
     return container

@@ -354,7 +354,7 @@ def test_constellation_fetches_secrets_on_startup():
     arg_client = ["sleep", "1000"]
     data = {"string": "VAULT:secret/foo:value"}
 
-    with vault_dev.server() as s:
+    with vault_dev.Server() as s:
         vault_client = s.client()
         secret = constellation_rand_str()
         vault_client.write("secret/foo", value=secret)
@@ -368,7 +368,7 @@ def test_constellation_fetches_secrets_on_startup():
             res = container.exec_run(["apk", "add", "--no-cache", "curl"])
             assert res.exit_code == 0
 
-        vault_config = vault.vault_config(
+        vault_config = vault.VaultConfig(
             vault_client.url, "token", {"token": s.token}
         )
 
