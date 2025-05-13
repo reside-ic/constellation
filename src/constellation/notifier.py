@@ -29,6 +29,8 @@ class Notifier:
         error = None
         try:
             r = requests.post(self.url, data=data, headers=self.headers)
+            # Ignore "magic number" 300 here for non-successful HTTP
+            # return code
             if r.status_code >= 300:  # noqa: PLR2004
                 error = r.reason
         except Exception as e:
