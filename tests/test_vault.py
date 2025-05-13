@@ -5,12 +5,12 @@ import pytest
 import vault_dev
 
 from constellation.vault import (
+    VaultConfig,
     VaultNotEnabled,
     drop_envvar,
     get_github_token,
     resolve_secret,
     resolve_secrets,
-    vault_config,
 )
 
 
@@ -100,13 +100,13 @@ def test_error_for_missing_secret_key():
 def test_vault_config():
     with vault_dev.server() as s:
         url = f"http://localhost:{s.port}"
-        cfg = vault_config(url, "token", {"token": s.token})
+        cfg = VaultConfig(url, "token", {"token": s.token})
         cl = cfg.client()
         assert cl.is_authenticated()
 
 
 def test_vault_config_when_missing():
-    cfg = vault_config(None, "token", {"token": "root"})
+    cfg = VaultConfig(None, "token", {"token": "root"})
     cl = cfg.client()
     assert isinstance(cl, VaultNotEnabled)
     with pytest.raises(Exception, match="Vault access is not enabled"):
@@ -135,7 +135,7 @@ def test_vault_config_login():
 
         url = f"http://localhost:{s.port}"
         token = os.environ["VAULT_TEST_GITHUB_PAT"]
-        cfg = vault_config(url, "github", {"token": token})
+        cfg = VaultConfig(url, "github", {"token": token})
         assert cfg.client().is_authenticated()
 
 
@@ -156,7 +156,7 @@ def test_vault_config_login_no_args():
         url = f"http://localhost:{s.port}"
         token = os.environ["VAULT_TEST_GITHUB_PAT"]
         with mock.patch.dict(os.environ, {"VAULT_AUTH_GITHUB_TOKEN": token}):
-            cfg = vault_config(url, "github", None)
+            cfg = VaultConfig(url, "github", None)
             assert cfg.client().is_authenticated()
 
 
