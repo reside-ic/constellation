@@ -64,7 +64,7 @@ class VaultConfig:
 
     def client(self):
         if not self.url:
-            return vault_not_enabled()
+            return VaultNotEnabled()
         # NOTE: we might actually try and pick up VAULT_TOKEN from the
         # environment, but can't let that value override any value
         # passed here.
@@ -88,7 +88,7 @@ class VaultConfig:
         return cl
 
 
-class vault_not_enabled:
+class VaultNotEnabled:
     def __getattr__(self, name):
         msg = "Vault access is not enabled"
         raise Exception(msg)

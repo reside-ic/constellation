@@ -5,12 +5,12 @@ import pytest
 import vault_dev
 
 from constellation.vault import (
+    VaultNotEnabled,
     drop_envvar,
     get_github_token,
     resolve_secret,
     resolve_secrets,
     vault_config,
-    vault_not_enabled,
 )
 
 
@@ -108,7 +108,7 @@ def test_vault_config():
 def test_vault_config_when_missing():
     cfg = vault_config(None, "token", {"token": "root"})
     cl = cfg.client()
-    assert isinstance(cl, vault_not_enabled)
+    assert isinstance(cl, VaultNotEnabled)
     with pytest.raises(Exception, match="Vault access is not enabled"):
         cl.read("secret/foo")
 

@@ -224,7 +224,11 @@ def containers_matching(prefix, stopped):
     return [x for x in cl.containers.list(stopped) if x.name.startswith(prefix)]
 
 
-class ignoring_missing:
+# this would be more naturally done with something from contextlib
+# rather than a class, so leave as an unconventional name until we
+# refactor later.  This is fairly close in principle to
+# contextlib.suppress() at the moment.
+class ignoring_missing:  # noqa: N801
     def __init__(self):
         pass
 

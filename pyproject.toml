@@ -122,7 +122,7 @@ select = [
   "I",
   "ICN",
   "ISC",
-  # "N",
+  "N",
   "PLC",
   "PLE",
   "PLR",
