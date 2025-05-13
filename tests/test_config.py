@@ -3,7 +3,7 @@ import tempfile
 from unittest import mock
 
 import pytest
-from constallation.config import (
+from constellation.config import (
     collapse,
     combine,
     config_boolean,
@@ -141,7 +141,7 @@ def test_config_vault():
         }
     }
     value = config_vault(data, ["vault"])
-    assert isinstance(value, vault.vault_config)
+    assert isinstance(value, vault.VaultConfig)
     assert value.url == "https://example.com/vault"
     assert value.auth_method == "github"
     assert value.auth_args == {"token": "mytoken"}
