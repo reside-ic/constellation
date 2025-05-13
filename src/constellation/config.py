@@ -1,7 +1,6 @@
 import copy
 import os
 import re
-import tempfile
 
 import yaml
 

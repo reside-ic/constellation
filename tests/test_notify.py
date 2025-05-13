@@ -3,7 +3,6 @@ import json
 from contextlib import redirect_stdout
 from unittest import mock
 
-import pytest
 import requests
 
 from constellation.notifier import Notifier
@@ -41,7 +40,7 @@ def test_notifier_gracefully_handles_http_error():
     ret.reason = "not found"
 
     f = io.StringIO()
-    with mock.patch("requests.post", return_value=ret) as requests_post:
+    with mock.patch("requests.post", return_value=ret):
         with redirect_stdout(f):
             obj.post(message)
 

@@ -1,11 +1,30 @@
-import base64
 import io
 import tempfile
 from contextlib import redirect_stdout
 
+import docker
 import pytest
 
-from constellation.docker_util import *
+from constellation.docker_util import (
+    bytes_from_container,
+    container_exists,
+    container_remove_wait,
+    container_wait_running,
+    ensure_network,
+    ensure_volume,
+    exec_safely,
+    file_into_container,
+    ignoring_missing,
+    image_exists,
+    image_pull,
+    network_exists,
+    remove_network,
+    remove_volume,
+    return_logs_and_remove,
+    string_from_container,
+    string_into_container,
+    volume_exists,
+)
 
 
 def test_exec_returns_output():

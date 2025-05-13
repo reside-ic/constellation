@@ -1,9 +1,26 @@
 import os
+import tempfile
 from unittest import mock
 
 import pytest
+from constallation.config import (
+    collapse,
+    combine,
+    config_boolean,
+    config_build,
+    config_dict,
+    config_dict_strict,
+    config_enum,
+    config_image_reference,
+    config_integer,
+    config_list,
+    config_string,
+    config_vault,
+    parse_env_vars,
+    read_yaml,
+)
 
-from constellation.config import *
+from constellation import vault
 
 sample_data = {
     "a": "value1",
@@ -168,7 +185,6 @@ def test_config_read_env_var_error():
         f.seek(0)
         with pytest.raises(KeyError):
             read_yaml(f.name)
-            dat = read_yaml(f.name)
 
 
 def test_combine():

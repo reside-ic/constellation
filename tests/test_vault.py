@@ -1,9 +1,17 @@
+import os
 from unittest import mock
 
 import pytest
 import vault_dev
 
-from constellation.vault import *
+from constellation.vault import (
+    drop_envvar,
+    get_github_token,
+    resolve_secret,
+    resolve_secrets,
+    vault_config,
+    vault_not_enabled,
+)
 
 
 def test_secret_reading():

@@ -6,7 +6,21 @@ import pytest
 import vault_dev
 
 import constellation
-from constellation.constellation import *
+from constellation import (
+    Constellation,
+    ConstellationBindMount,
+    ConstellationContainer,
+    ConstellationContainerCollection,
+    ConstellationNetwork,
+    ConstellationService,
+    ConstellationVolume,
+    ConstellationVolumeCollection,
+    ConstellationVolumeMount,
+    container_ports,
+    docker_util,
+    port_config,
+    vault,
+)
 from constellation.util import ImageReference
 
 
@@ -343,12 +357,11 @@ def test_constellation_fetches_secrets_on_startup():
 
     with vault_dev.server() as s:
         vault_client = s.client()
-        vault_url = vault_client.url
         secret = rand_str()
         vault_client.write("secret/foo", value=secret)
 
         def cfg_server(container, data):
-            res = docker_util.string_into_container(
+            docker_util.string_into_container(
                 data["string"], container, "/config"
             )
 
