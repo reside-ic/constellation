@@ -3,6 +3,8 @@ import tempfile
 from unittest import mock
 
 import pytest
+
+from constellation import vault
 from constellation.config import (
     collapse,
     combine,
@@ -19,8 +21,6 @@ from constellation.config import (
     parse_env_vars,
     read_yaml,
 )
-
-from constellation import vault
 
 sample_data = {
     "a": "value1",
