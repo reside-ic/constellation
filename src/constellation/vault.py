@@ -36,9 +36,9 @@ def resolve_secrets(x, client):
 def resolve_secrets_object(obj, client):
     for k, v in vars(obj).items():
         if isinstance(v, str):
-            updated, v = resolve_secret(v, client)
+            updated, value = resolve_secret(v, client)
             if updated:
-                setattr(obj, k, v)
+                setattr(obj, k, value)
         if isinstance(v, dict):
             resolve_secrets_dict(v, client)
 
@@ -49,9 +49,9 @@ def resolve_secrets_dict(d, client):
         v,
     ) in d.items():
         if isinstance(v, str):
-            updated, v = resolve_secret(v, client)
+            updated, value = resolve_secret(v, client)
             if updated:
-                d[k] = v
+                d[k] = value
         elif isinstance(v, dict):
             resolve_secrets_dict(v, client)
 
