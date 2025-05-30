@@ -10,6 +10,7 @@ from constellation.docker_util import (
     container_exists,
     container_remove_wait,
     container_wait_running,
+    ensure_image,
     ensure_network,
     ensure_volume,
     exec_safely,
@@ -25,6 +26,11 @@ from constellation.docker_util import (
     string_into_container,
     volume_exists,
 )
+
+
+def drop_image(ref):
+    with ignoring_missing():
+        docker.client.from_env().images.remove(ref)
 
 
 def test_exec_returns_output():
@@ -236,16 +242,11 @@ def test_ensure_volume_creates_volume():
 
 
 def test_pull_container():
-    client = docker.client.from_env()
     # NOTE: you have to be careful here because the default python
     # docker client behaviour when pulling an image without specifying
     # a tag name is to pull *all* images, which is surprising.
     name = "hello-world:latest"
-    try:
-        client.images.remove(name)
-    except docker.errors.NotFound:
-        pass
-
+    drop_image(name)
     assert not image_exists(name)
 
     f = io.StringIO()
@@ -265,6 +266,27 @@ def test_pull_container():
     assert "Pulling docker image example (hello-world:latest)" in f.getvalue()
     assert "unchanged" in f.getvalue()
     assert not res
+
+
+def test_ensure_image(capsys):
+    # NOTE: you have to be careful here because the default python
+    # docker client behaviour when pulling an image without specifying
+    # a tag name is to pull *all* images, which is surprising.
+    name = "hello-world"
+    ref = "hello-world:latest"
+    drop_image(ref)
+    assert not image_exists(name)
+
+    capsys.readouterr()
+    ensure_image(name, ref)
+
+    assert image_exists(ref)
+    res = capsys.readouterr()
+    assert "Pulling docker image hello-world (hello-world:latest)" in res.out
+
+    assert image_exists(ref)
+    res = capsys.readouterr()
+    assert not res.out
 
 
 def test_ignoring_missing_does_not_raise():
