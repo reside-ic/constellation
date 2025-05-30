@@ -169,7 +169,7 @@ class ConstellationContainer:
         networking_config = cl.api.create_networking_config(
             {f"{network.name}": endpoint_config}
         )
-        docker_util.ensure_image(self.name, self.image)
+        docker_util.ensure_image(self.name, str(self.image))
         x_obj = cl.api.create_container(
             str(self.image),
             self.args,
