@@ -27,6 +27,13 @@ from constellation.docker_util import (
     volume_exists,
 )
 
+def drop_image(ref):
+    client = docker.client.from_env()
+    try:
+        client.images.remove(ref)
+    except docker.errors.NotFound:
+        pass
+
 
 def test_exec_returns_output():
     cl = docker.client.from_env()
@@ -242,11 +249,7 @@ def test_pull_container():
     # docker client behaviour when pulling an image without specifying
     # a tag name is to pull *all* images, which is surprising.
     name = "hello-world:latest"
-    try:
-        client.images.remove(name)
-    except docker.errors.NotFound:
-        pass
-
+    drop_image(name)
     assert not image_exists(name)
 
     f = io.StringIO()
@@ -275,11 +278,7 @@ def test_ensure_image(capsys):
     # a tag name is to pull *all* images, which is surprising.
     name = "hello-world"
     ref = "hello-world:latest"
-    try:
-        client.images.remove(ref)
-    except docker.errors.NotFound:
-        pass
-
+    drop_image(ref)
     assert not image_exists(name)
 
     capsys.readouterr()
