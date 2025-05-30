@@ -23,6 +23,11 @@ from constellation.constellation import (
 from constellation.util import ImageReference, rand_str
 
 
+def drop_image(ref):
+    with docker_util.ignoring_missing():
+        docker.client.from_env().images.remove(ref)
+
+
 def constellation_rand_str(n=10, prefix="constellation-"):
     return rand_str(n, prefix)
 
@@ -195,6 +200,28 @@ def test_container_simple():
     assert f.getvalue() == ""
 
 
+def test_pull_missing_container_on_start(capsys):
+    nm = rand_str(n=10, prefix="")
+    ref = ImageReference("library", "redis", "5.0")
+
+    drop_image(str(ref))
+
+    x = ConstellationContainer(nm, ref)
+    assert x.name_external("prefix") == f"prefix-{nm}"
+    assert not x.exists("prefix")
+    assert x.get("prefix") is None
+    nw = ConstellationNetwork(constellation_rand_str())
+    nw.create()
+
+    x.start("prefix", network=nw, volumes=None)
+    res = capsys.readouterr()
+    assert "Pulling docker image" in res.out
+    x.stop("prefix")
+    x.stop("prefix", True)
+    x.remove("prefix")
+    nw.remove()
+
+
 def test_container_start_stop_remove():
     nm = rand_str(n=10, prefix="")
     cl = docker.client.from_env()
@@ -258,8 +285,7 @@ def test_container_ports():
 def test_container_pull():
     ref = "library/hello-world:latest"
     x = ConstellationContainer("hello", ref)
-    with docker_util.ignoring_missing():
-        docker.client.from_env().images.remove(ref)
+    drop_image(ref)
     x.pull_image()
     assert docker_util.image_exists(ref)
 
