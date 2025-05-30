@@ -27,6 +27,7 @@ from constellation.docker_util import (
     volume_exists,
 )
 
+
 def drop_image(ref):
     client = docker.client.from_env()
     try:
@@ -244,7 +245,6 @@ def test_ensure_volume_creates_volume():
 
 
 def test_pull_container():
-    client = docker.client.from_env()
     # NOTE: you have to be careful here because the default python
     # docker client behaviour when pulling an image without specifying
     # a tag name is to pull *all* images, which is surprising.
@@ -272,7 +272,6 @@ def test_pull_container():
 
 
 def test_ensure_image(capsys):
-    client = docker.client.from_env()
     # NOTE: you have to be careful here because the default python
     # docker client behaviour when pulling an image without specifying
     # a tag name is to pull *all* images, which is surprising.
