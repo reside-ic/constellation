@@ -29,11 +29,8 @@ from constellation.docker_util import (
 
 
 def drop_image(ref):
-    client = docker.client.from_env()
-    try:
-        client.images.remove(ref)
-    except docker.errors.NotFound:
-        pass
+    with ignoring_missing():
+        docker.client.from_env().images.remove(ref)
 
 
 def test_exec_returns_output():
