@@ -25,6 +25,14 @@ def ensure_volume(name):
         client.volumes.create(name)
 
 
+def ensure_image(name, image):
+    client = docker.client.from_env()
+    try:
+        client.images.get(str(image))
+    except docker.errors.NotFound:
+        image_pull(name, image)
+
+
 def exec_safely(container, args, **kwargs):
     ans = container.exec_run(args, **kwargs)
     if ans[0] != 0:
