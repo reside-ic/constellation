@@ -1,25 +1,32 @@
-from config import config_integer, config_string, config_list
-from constellation import ImageReference
+from constellation.config import (
+    config_string,
+    config_integer,
+    config_list
+)
+
+import constellation
 
 class AcmeConfig:
     def __init__(self, data):
-        image_name = config.config_string(["acme_buddy", "name"])
-        image_repo = config.config_string(["acme_buddy", "repo"])
-        image_tag = config.config_string(["acme_buddy", "tag"])
-        self.acme_buddy_ref = constellation.ImageReference(repo, name, tag)
+        image_name = config_string(data, ["acme_buddy", "image", "name"])
+        image_repo = config_string(data, ["acme_buddy", "image", "repo"])
+        image_tag = config_string(data, ["acme_buddy", "image", "tag"])
+        self.acme_buddy_ref = constellation.ImageReference(image_repo, image_name, image_tag)
 
-        self.acme_buddy_port = config.config_integer(dat, ["acme_buddy", "port"])
-        self.acme_buddy_dns_provider = config.config_string(dat, ["acme_buddy", "dns_provider"])
+        self.acme_buddy_port = config_integer(data, ["acme_buddy", "port"])
+        self.acme_buddy_dns_provider = config_string(data, ["acme_buddy", "dns_provider"])
         if self.acme_buddy_dns_provider == "hdb":
-            self.acme_buddy_hdb_username = config.config_string(dat, ["acme_buddy", "env", "HDB_ACME_USERNAME"])
-            self.acme_buddy_hdb_username = config.config_string(dat, ["acme_buddy", "env", "HDB_ACME_PASSWORD"])
+            self.acme_buddy_hdb_username = config_string(data, ["acme_buddy", "env", "HDB_ACME_USERNAME"])
+            self.acme_buddy_hdb_password = config_string(data, ["acme_buddy", "env", "HDB_ACME_PASSWORD"])
         elif self.acme_buddy_dns_provider == "cloudflare":
-            self.acme_buddy_cloudflare_token = config.config_string(dat, ["acme_buddy", "env", "CLOUDFLARE_DNS_API_TOKEN"])
+            self.acme_buddy_cloudflare_token = config_string(data, ["acme_buddy", "env", "CLOUDFLARE_DNS_API_TOKEN"])
         else:
             raise ValueError(f"Unrecognised DNS provider: {self.acme_buddy_dns_provider}")
 
-        self.acme_buddy_email = config.config_string(dat, ["acme_buddy", "email"])
-        self.acme_additional_domains = config.config_list(dat, ["acme_buddy", "additional_domains"])
+        self.acme_buddy_email = config_string(data, ["acme_buddy", "email"])
+        if "additional_domains" in data["acme_buddy"]:
+            self.acme_buddy_additional_domains = config_list(data, ["acme_buddy", "additional_domains"])
+
 
 
 def acme_buddy_env(dns_provider, cfg):
@@ -34,7 +41,7 @@ def acme_buddy_env(dns_provider, cfg):
     elif dns_provider == "cloudflare":
         acme_env.update({
             "CLOUDFLARE_DNS_API_TOKEN": cfg.acme_buddy_cloudflare_token
-        })s
+        })
     return acme_env
 
 
@@ -48,7 +55,7 @@ def acme_buddy_container(cfg, proxy, tls_volume):
         constellation.ConstellationBindMount("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
 
-    domain_names = ",".join([cfg.hostname] + cfg.acme_additional_domains)
+    domain_names = ",".join([cfg.hostname] + cfg.acme_buddy_additional_domains)
 
     acme = constellation.ConstellationContainer(
         name,
