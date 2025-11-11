@@ -5,6 +5,7 @@ import re
 import yaml
 
 from constellation import vault
+from constellation import acme
 from constellation.util import ImageReference
 
 
@@ -66,6 +67,9 @@ def config_vault(data, path):
     auth_args = config_dict(data, [*path, "auth", "args"], True)
     return vault.VaultConfig(url, auth_method, auth_args)
 
+def config_acme(data, path):
+    return acme.AcmeConfig(data)
+    
 
 def config_string(data, path, is_optional=False, default=None):
     return config_value(data, path, "string", is_optional, default)
