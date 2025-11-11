@@ -69,7 +69,7 @@ def config_vault(data, path):
 
 def config_acme(data, path):
     return acme.AcmeConfig(data)
-    
+
 
 def config_string(data, path, is_optional=False, default=None):
     return config_value(data, path, "string", is_optional, default)
