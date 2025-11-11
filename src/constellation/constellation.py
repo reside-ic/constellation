@@ -216,7 +216,7 @@ class ConstellationContainer:
                 container.remove()
 
 
-# This could be achievd by inheriting from ConstellationContainer but
+# This could be achieved by inheriting from ConstellationContainer but
 # this seems more like a has-a than an is-a relationship.
 class ConstellationService:
     def __init__(self, name, image, scale, **kwargs):
