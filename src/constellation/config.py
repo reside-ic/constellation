@@ -68,7 +68,9 @@ def config_vault(data, path):
 
 
 def config_acme(data):
-    from constellation import acme
+    # Below: if I put this import at the top, I get a circular import
+    # problem I don't know how to fix, so have to disable a warning.
+    from constellation import acme  # noqa: PLC0415
 
     return acme.AcmeBuddyConfig(data)
 
