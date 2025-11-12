@@ -18,16 +18,17 @@ class Constellation:
         volumes,
         data=None,
         vault_config=None,
+        acme_buddy=None,
     ):
         self.data = data
 
-        assert type(name) is str
+        assert isinstance(name, str)
         self.name = name
 
-        assert type(prefix) is str
+        assert isinstance(prefix, str)
         self.prefix = prefix
 
-        assert type(network) is str
+        assert isinstance(network, str)
         self.network = ConstellationNetwork(network)
         self.volumes = ConstellationVolumeCollection(volumes)
 
@@ -36,6 +37,7 @@ class Constellation:
 
         self.containers = ConstellationContainerCollection(containers)
         self.vault_config = vault_config
+        self.acme_buddy = acme_buddy
 
     def status(self):
         nw_name = self.network.name
