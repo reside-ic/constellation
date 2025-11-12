@@ -51,6 +51,9 @@ def acme_buddy_env(dns_provider, acme_buddy_cfg):
         acme_env.update(
             {"CLOUDFLARE_DNS_API_TOKEN": acme_buddy_cfg.cloudflare_token}
         )
+    else:
+        err = f"Unrecognised DNS provider: {dns_provider}"
+        raise ValueError(err)
     return acme_env
 
 
