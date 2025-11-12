@@ -196,7 +196,7 @@ def string_from_container(container, path):
 
 
 def bytes_from_container(container, path):
-    stream, status = container.get_archive(path)
+    stream, _status = container.get_archive(path)
     try:
         fd, tmp = tempfile.mkstemp(text=False)
         with os.fdopen(fd, "wb") as f:
