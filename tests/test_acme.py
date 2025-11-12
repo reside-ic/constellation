@@ -103,11 +103,11 @@ def test_acme_buddy_container(monkeypatch):
     cfg.container_prefix = "prefix"
     cfg.hostname = "example.com"
     cfg.acme_buddy = types.SimpleNamespace(
-        dns_provider = "cloudflare",
-        cloudflare_token = "abcdefgh12345678",
-        ref = "ghcr.io/reside-ic/acme-buddy:main",
-        port = 2112,
-        email = "reside@imperial.ac.uk",
+        dns_provider="cloudflare",
+        cloudflare_token="abcdefgh12345678",
+        ref="ghcr.io/reside-ic/acme-buddy:main",
+        port=2112,
+        email="reside@imperial.ac.uk",
         additional_domains=["www.example.com"],
     )
 
@@ -125,4 +125,3 @@ def test_acme_buddy_container(monkeypatch):
     assert acme.args[4] == "--dns-provider"
     assert acme.args[5] == "cloudflare"
     assert acme.args[-1] == "prefix-proxy"
-
