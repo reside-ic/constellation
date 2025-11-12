@@ -1,4 +1,6 @@
-from constellation.acme import AcmeBuddyConfig
+import pytest
+
+from constellation.config import config_acme
 
 
 def test_acme_buddy_config_hdb():
@@ -19,7 +21,7 @@ def test_acme_buddy_config_hdb():
         },
     }
 
-    cfg = AcmeBuddyConfig(data)
+    cfg = config_acme(data)
     assert cfg.email == "reside@imperial.ac.uk"
     assert cfg.dns_provider == "hdb"
     assert cfg.hdb_username == "testuser"
@@ -47,7 +49,7 @@ def test_acme_buddy_config_cloudflare():
             },
         },
     }
-    cfg = AcmeBuddyConfig(data)
+    cfg = config_acme(data)
     assert cfg.email == "reside@imperial.ac.uk"
     assert cfg.dns_provider == "cloudflare"
     assert cfg.cloudflare_token == "abcdefgh12345678"
@@ -56,3 +58,26 @@ def test_acme_buddy_config_cloudflare():
     assert cfg.ref.tag == "main"
     assert cfg.port == 2112
     assert cfg.additional_domains == ["anotherhost.com"]
+
+
+def test_acme_buddy_bad_provider():
+    data = {
+        "acme_buddy": {
+            "additional_domains": ["anotherhost.com"],
+            "email": "reside@imperial.ac.uk",
+            "image": {
+                "repo": "ghcr.io/reside-ic",
+                "name": "acme-buddy",
+                "tag": "main",
+            },
+            "port": 2112,
+            "dns_provider": "anotherdns",
+            "env": {
+                "ANOTHER_API_TOKEN": "abcdefgh12345678",
+            },
+        },
+    }
+    with pytest.raises(
+        ValueError, match="Unrecognised DNS provider: anotherdns"
+    ):
+        _cfg = config_acme(data)
