@@ -33,7 +33,7 @@ def test_acme_buddy_config_hdb():
 def test_acme_buddy_config_cloudflare():
     data = {
         "acme_buddy": {
-            "additional_domains": "anotherhost.com",
+            "additional_domains": ["anotherhost.com"],
             "email": "reside@imperial.ac.uk",
             "image": {
                 "repo": "ghcr.io/reside-ic",
@@ -55,4 +55,4 @@ def test_acme_buddy_config_cloudflare():
     assert cfg.ref.name == "acme-buddy"
     assert cfg.ref.tag == "main"
     assert cfg.port == 2112
-    assert cfg.additional_domains == "anotherhost.com"
+    assert cfg.additional_domains == ["anotherhost.com"]
