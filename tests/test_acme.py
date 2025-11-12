@@ -98,24 +98,6 @@ def test_acme_buddy_bad_provider():
 
 def test_acme_buddy_container(monkeypatch):
     monkeypatch.setenv("ACME_BUDDY_STAGING", "0")
-    data = {
-        "acme_buddy": {
-            "additional_domains": ["anotherhost.com"],
-            "email": "reside@imperial.ac.uk",
-            "image": {
-                "repo": "ghcr.io/reside-ic",
-                "name": "acme-buddy",
-                "tag": "main",
-            },
-            "port": 2112,
-            "dns_provider": "cloudflare",
-            "env": {
-                "CLOUDFLARE_DNS_API_TOKEN": "abcdefgh12345678",
-            },
-        }
-    }
-
-    acme_cfg = config_acme(data)
     cfg = types.SimpleNamespace()
     cfg.containers = {"acme-buddy": "acme-buddy"}
     cfg.container_prefix = "prefix"
