@@ -87,3 +87,8 @@ def test_acme_buddy_bad_provider():
         ValueError, match="Unrecognised DNS provider: anotherdns"
     ):
         _cfg = config_acme(data)
+
+    with pytest.raises(
+        ValueError, match="Unrecognised DNS provider: anotherdns"
+    ):
+        _env = acme_buddy_env("anotherdns", data)
