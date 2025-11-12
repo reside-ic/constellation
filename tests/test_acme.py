@@ -1,5 +1,6 @@
 import pytest
 
+from constellation.acme import acme_buddy_env
 from constellation.config import config_acme
 
 
@@ -30,6 +31,9 @@ def test_acme_buddy_config_hdb():
     assert cfg.ref.name == "acme-buddy"
     assert cfg.ref.tag == "main"
     assert cfg.port == 2112
+    env = acme_buddy_env(cfg.dns_provider, cfg)
+    assert env["HDB_ACME_USERNAME"] == cfg.hdb_username
+    assert env["HDB_ACME_PASSWORD"] == cfg.hdb_password
 
 
 def test_acme_buddy_config_cloudflare():
@@ -58,6 +62,8 @@ def test_acme_buddy_config_cloudflare():
     assert cfg.ref.tag == "main"
     assert cfg.port == 2112
     assert cfg.additional_domains == ["anotherhost.com"]
+    env = acme_buddy_env(cfg.dns_provider, cfg)
+    assert env["CLOUDFLARE_DNS_API_TOKEN"] == cfg.cloudflare_token
 
 
 def test_acme_buddy_bad_provider():
