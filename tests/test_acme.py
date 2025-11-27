@@ -1,7 +1,5 @@
 import types
 
-import pytest
-
 from constellation.acme import acme_buddy_container
 from constellation.config import config_acme
 
@@ -62,7 +60,7 @@ def test_acme_buddy_config_cloudflare(monkeypatch):
     assert cfg.port == 2112
     assert cfg.additional_domains == ["anotherhost.com"]
     assert cfg.env["CLOUDFLARE_DNS_API_TOKEN"] == "abcdefgh12345678"
-    assert cfg.env["ACME_BUDDY_STAGING"] == '0'
+    assert cfg.env["ACME_BUDDY_STAGING"] == "0"
 
 
 def test_acme_buddy_container():
@@ -73,14 +71,13 @@ def test_acme_buddy_container():
     cfg.acme_buddy = types.SimpleNamespace(
         dns_provider="cloudflare",
         env={
-            "CLOUDFLARE_DNS_API_TOKEN": "abcdefgh12345678", 
+            "CLOUDFLARE_DNS_API_TOKEN": "abcdefgh12345678",
             "ACME_BUDDY_STAGING": "0",
         },
         ref="ghcr.io/reside-ic/acme-buddy:main",
         port=2112,
         email="reside@imperial.ac.uk",
         additional_domains=["www.example.com"],
-        
     )
 
     proxy = types.SimpleNamespace()
@@ -88,7 +85,7 @@ def test_acme_buddy_container():
     tls_volume = "tls-volume"
     acme = acme_buddy_container(cfg, proxy, tls_volume)
 
-    assert acme.environment["ACME_BUDDY_STAGING"] == '0'
+    assert acme.environment["ACME_BUDDY_STAGING"] == "0"
     assert acme.environment["CLOUDFLARE_DNS_API_TOKEN"] == "abcdefgh12345678"
     assert acme.args[0] == "--domain"
     assert acme.args[1] == "example.com,www.example.com"

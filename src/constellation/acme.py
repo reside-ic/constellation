@@ -1,7 +1,12 @@
 import os
 
 import constellation
-from constellation.config import config_dict, config_integer, config_list, config_string
+from constellation.config import (
+    config_dict,
+    config_integer,
+    config_list,
+    config_string,
+)
 
 
 class AcmeBuddyConfig:
