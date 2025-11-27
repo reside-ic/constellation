@@ -4,7 +4,7 @@ import re
 
 import yaml
 
-from constellation import vault
+from constellation import acme, vault
 from constellation.util import ImageReference
 
 
@@ -68,10 +68,6 @@ def config_vault(data, path):
 
 
 def config_acme(data):
-    # Below: if I put this import at the top, I get a circular import
-    # problem I don't know how to fix, so have to disable a warning.
-    from constellation import acme
-
     return acme.AcmeBuddyConfig(data)
 
 
