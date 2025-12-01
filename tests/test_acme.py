@@ -22,7 +22,7 @@ def test_acme_buddy_config_hdb():
         },
     }
 
-    cfg = config_acme(data)
+    cfg = config_acme(data, "acme_buddy")
     assert cfg.email == "reside@imperial.ac.uk"
     assert cfg.dns_provider == "hdb"
     assert cfg.ref.repo == "ghcr.io/reside-ic"
@@ -51,7 +51,7 @@ def test_acme_buddy_config_cloudflare(monkeypatch):
             },
         },
     }
-    cfg = config_acme(data)
+    cfg = config_acme(data, "acme_buddy")
     assert cfg.email == "reside@imperial.ac.uk"
     assert cfg.dns_provider == "cloudflare"
     assert cfg.ref.repo == "ghcr.io/reside-ic"

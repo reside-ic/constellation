@@ -67,8 +67,8 @@ def config_vault(data, path):
     return vault.VaultConfig(url, auth_method, auth_args)
 
 
-def config_acme(data):
-    return acme.AcmeBuddyConfig(data)
+def config_acme(data, path):
+    return acme.AcmeBuddyConfig(data, path)
 
 
 def config_string(data, path, is_optional=False, default=None):

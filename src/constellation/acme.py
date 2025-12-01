@@ -10,20 +10,20 @@ from constellation.config import (
 
 
 class AcmeBuddyConfig:
-    def __init__(self, data):
-        name = config_string(data, ["acme_buddy", "image", "name"])
-        repo = config_string(data, ["acme_buddy", "image", "repo"])
-        tag = config_string(data, ["acme_buddy", "image", "tag"])
+    def __init__(self, data, path):
+        name = config_string(data, [path, "image", "name"])
+        repo = config_string(data, [path, "image", "repo"])
+        tag = config_string(data, [path, "image", "tag"])
         self.ref = constellation.ImageReference(repo, name, tag)
-        self.port = config_integer(data, ["acme_buddy", "port"])
-        self.dns_provider = config_string(data, ["acme_buddy", "dns_provider"])
-        self.env = config_dict(data, ["acme_buddy", "env"])
+        self.port = config_integer(data, [path, "port"])
+        self.dns_provider = config_string(data, [path, "dns_provider"])
+        self.env = config_dict(data, [path, "env"])
         if "ACME_BUDDY_STAGING" in os.environ:
             self.env["ACME_BUDDY_STAGING"] = os.environ["ACME_BUDDY_STAGING"]
-        self.email = config_string(data, ["acme_buddy", "email"])
-        if "additional_domains" in data["acme_buddy"]:
+        self.email = config_string(data, [path, "email"])
+        if "additional_domains" in data[path]:
             self.additional_domains = config_list(
-                data, ["acme_buddy", "additional_domains"]
+                data, [path, "additional_domains"]
             )
 
 
