@@ -27,33 +27,32 @@ class AcmeBuddyConfig:
             )
 
 
-def acme_buddy_container(cfg, proxy, tls_volume):
-    name = cfg.containers["acme-buddy"]
-    dns_provider = cfg.acme_buddy.dns_provider
-
+def acme_buddy_container(
+    cfg: AcmeBuddyConfig, name: str, proxy: str, volume: str, hostname: str
+) -> constellation.ConstellationContainer:
     acme_mounts = [
-        constellation.ConstellationVolumeMount(tls_volume, "/tls"),
+        constellation.ConstellationVolumeMount(volume, "/tls"),
         constellation.ConstellationBindMount(
             "/var/run/docker.sock",
             "/var/run/docker.sock",
         ),
     ]
 
-    domain_names = ",".join((cfg.hostname, *cfg.acme_buddy.additional_domains))
+    domain_names = ",".join((hostname, *cfg.additional_domains))
 
     acme = constellation.ConstellationContainer(
         name,
-        cfg.acme_buddy.ref,
-        ports=[cfg.acme_buddy.port],
+        cfg.ref,
+        ports=[cfg.port],
         mounts=acme_mounts,
-        environment=cfg.acme_buddy.env,
+        environment=cfg.env,
         args=[
             "--domain",
             domain_names,
             "--email",
-            cfg.acme_buddy.email,
+            cfg.email,
             "--dns-provider",
-            dns_provider,
+            cfg.dns_provider,
             "--certificate-path",
             "/tls/certificate.pem",
             "--key-path",
@@ -61,7 +60,7 @@ def acme_buddy_container(cfg, proxy, tls_volume):
             "--account-path",
             "/tls/account.json",
             "--reload-container",
-            proxy.name_external(cfg.container_prefix),
+            proxy,
         ],
     )
     return acme

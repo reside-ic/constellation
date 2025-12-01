@@ -83,7 +83,13 @@ def test_acme_buddy_container():
     proxy = types.SimpleNamespace()
     proxy.name_external = lambda prefix: f"{prefix}-proxy"
     tls_volume = "tls-volume"
-    acme = acme_buddy_container(cfg, proxy, tls_volume)
+    acme = acme_buddy_container(
+        cfg.acme_buddy,
+        cfg.containers["acme-buddy"],
+        proxy.name_external(cfg.container_prefix),
+        tls_volume,
+        cfg.hostname,
+    )
 
     assert acme.environment["ACME_BUDDY_STAGING"] == "0"
     assert acme.environment["CLOUDFLARE_DNS_API_TOKEN"] == "abcdefgh12345678"
