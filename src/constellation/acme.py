@@ -1,16 +1,16 @@
 import os
 
 import constellation
-
+from constellation.config import (
+    config_dict,
+    config_integer,
+    config_list,
+    config_string,
+)
 
 class AcmeBuddyConfig:
     def __init__(self, data, path: list[str]):
-        from constellation.config import (
-            config_dict,
-            config_integer,
-            config_list,
-            config_string,
-        )
+       
 
         name = config_string(data, [*path, "image", "name"])
         repo = config_string(data, [*path, "image", "repo"])
