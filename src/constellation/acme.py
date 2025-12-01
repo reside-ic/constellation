@@ -21,6 +21,7 @@ class AcmeBuddyConfig:
         if "ACME_BUDDY_STAGING" in os.environ:
             self.env["ACME_BUDDY_STAGING"] = os.environ["ACME_BUDDY_STAGING"]
         self.email = config_string(data, [*path, "email"])
+        self.additional_domains = []
         if "additional_domains" in config_dict(data, path):
             self.additional_domains = config_list(
                 data, [*path, "additional_domains"]
