@@ -68,6 +68,8 @@ def config_vault(data, path):
 
 
 def config_acme(data, path):
+    if isinstance(path, str):
+        path = [path]
     return acme.AcmeBuddyConfig(data, path)
 
 
