@@ -4,7 +4,7 @@ import re
 
 import yaml
 
-from constellation import acme, vault
+from constellation import vault
 from constellation.util import ImageReference
 
 
@@ -68,6 +68,8 @@ def config_vault(data, path):
 
 
 def config_acme(data, path):
+    from constellation import acme
+
     if isinstance(path, str):
         path = [path]
     return acme.AcmeBuddyConfig(data, path)
