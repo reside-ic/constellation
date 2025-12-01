@@ -68,7 +68,7 @@ def config_vault(data, path):
 
 
 def config_acme(data, path):
-    from constellation import acme  # noqa: PLC0415
+    from constellation import acme
 
     if isinstance(path, str):
         path = [path]
