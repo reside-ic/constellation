@@ -8,10 +8,9 @@ from constellation.config import (
     config_string,
 )
 
+
 class AcmeBuddyConfig:
     def __init__(self, data, path: list[str]):
-       
-
         name = config_string(data, [*path, "image", "name"])
         repo = config_string(data, [*path, "image", "repo"])
         tag = config_string(data, [*path, "image", "tag"])
