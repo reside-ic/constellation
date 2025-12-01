@@ -4,7 +4,7 @@ import re
 
 import yaml
 
-from constellation import vault
+from constellation import acme, vault
 from constellation.util import ImageReference
 
 
@@ -32,7 +32,7 @@ def config_build(path, data, extra=None, options=None):
 # Utility function for centralising control over pulling information
 # out of the configuration.
 def config_value(data, path, data_type, is_optional, default=None):
-    if type(path) is str:
+    if isinstance(path, str):
         path = [path]
     for i, p in enumerate(path):
         try:
@@ -67,6 +67,12 @@ def config_vault(data, path):
     return vault.VaultConfig(url, auth_method, auth_args)
 
 
+def config_acme(data, path):
+    if isinstance(path, str):
+        path = [path]
+    return acme.AcmeBuddyConfig(data, path)
+
+
 def config_string(data, path, is_optional=False, default=None):
     return config_value(data, path, "string", is_optional, default)
 
@@ -91,7 +97,7 @@ def config_dict_strict(data, path, keys, is_optional=False, default=None):
         msg = "Expected keys {} for {}".format(", ".join(keys), ":".join(path))
         raise ValueError(msg)
     for k, v in d.items():
-        if type(v) is not str:
+        if not isinstance(v, str):
             msg = "Expected a string for {}".format(":".join([*path, k]))
             raise ValueError(msg)
     return d
@@ -112,7 +118,7 @@ def config_enum(data, path, values, is_optional=False, default=None):
 
 
 def config_image_reference(dat, path, name="name"):
-    if type(path) is str:
+    if isinstance(path, str):
         path = [path]
     repo = config_string(dat, [*path, "repo"])
     name = config_string(dat, [*path, name])
@@ -130,7 +136,7 @@ def combine(base, extra):
     """Combine exactly two dictionaries recursively, modifying the first
     argument in place with the contets of the second"""
     for k, v in extra.items():
-        if k in base and type(base[k]) is dict and v is not None:
+        if k in base and isinstance(base[k], dict) and v is not None:
             combine(base[k], v)
         else:
             base[k] = v

@@ -18,16 +18,17 @@ class Constellation:
         volumes,
         data=None,
         vault_config=None,
+        acme_buddy=None,
     ):
         self.data = data
 
-        assert type(name) is str
+        assert isinstance(name, str)
         self.name = name
 
-        assert type(prefix) is str
+        assert isinstance(prefix, str)
         self.prefix = prefix
 
-        assert type(network) is str
+        assert isinstance(network, str)
         self.network = ConstellationNetwork(network)
         self.volumes = ConstellationVolumeCollection(volumes)
 
@@ -36,6 +37,7 @@ class Constellation:
 
         self.containers = ConstellationContainerCollection(containers)
         self.vault_config = vault_config
+        self.acme_buddy = acme_buddy
 
     def status(self):
         nw_name = self.network.name
@@ -216,7 +218,7 @@ class ConstellationContainer:
                 container.remove()
 
 
-# This could be achievd by inheriting from ConstellationContainer but
+# This could be achieved by inheriting from ConstellationContainer but
 # this seems more like a has-a than an is-a relationship.
 class ConstellationService:
     def __init__(self, name, image, scale, **kwargs):

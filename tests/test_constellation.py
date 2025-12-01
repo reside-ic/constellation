@@ -100,7 +100,7 @@ def test_empty_volume_collection():
 
 def test_volume_mount_with_relative_paths():
     with pytest.raises(
-        ValueError, match="Path 'target_path' must be an absolute path."
+        ValueError, match=r"Path 'target_path' must be an absolute path."
     ):
         ConstellationVolumeMount("role1", "target_path")
 
@@ -142,11 +142,11 @@ def test_volume_mount_with_args():
 
 def test_bind_mount_with_relative_paths():
     with pytest.raises(
-        ValueError, match="Path 'target_path' must be an absolute path."
+        ValueError, match=r"Path 'target_path' must be an absolute path."
     ):
         ConstellationBindMount("/source_path", "target_path")
     with pytest.raises(
-        ValueError, match="Path 'source_path' must be an absolute path."
+        ValueError, match=r"Path 'source_path' must be an absolute path."
     ):
         ConstellationBindMount("source_path", "/target_path")
 
