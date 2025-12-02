@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from unittest import mock
 
 import pytest
@@ -69,6 +70,24 @@ def test_secret_reading_of_objects():
         assert dat.foo == "s3cret"
         assert dat.bar == "constant"
         assert dat.fizz == {"secret": "s3cret"}
+
+
+def test_secret_reading_of_nested_dataclass():
+    with vault_dev.Server() as s:
+        client = s.client()
+        client.write("secret/foo", value="s3cret")
+
+        @dataclass
+        class Nested:
+            value: str
+
+        @dataclass
+        class Data:
+            nested: Nested
+
+        dat = Data(Nested("VAULT:secret/foo:value"))
+        resolve_secrets(dat, client)
+        assert dat.nested.value == "s3cret"
 
 
 def test_accessor_validation():

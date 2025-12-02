@@ -1,7 +1,16 @@
 import os
 import re
+from dataclasses import is_dataclass
 
 import hvac
+
+
+# is_dataclass is weird and returns true on both the actual class and
+# instances of it.
+#
+# See https://docs.python.org/3/library/dataclasses.html#dataclasses.is_dataclass
+def is_dataclass_instance(obj):
+    return is_dataclass(obj) and not isinstance(obj, type)
 
 
 def resolve_secret(value, client):
@@ -39,8 +48,12 @@ def resolve_secrets_object(obj, client):
             updated, value = resolve_secret(v, client)
             if updated:
                 setattr(obj, k, value)
+
         if isinstance(v, dict):
             resolve_secrets_dict(v, client)
+
+        if is_dataclass_instance(v):
+            resolve_secrets_object(v, client)
 
 
 def resolve_secrets_dict(d, client):
