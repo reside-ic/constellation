@@ -16,10 +16,12 @@ class AcmeBuddyConfig:
         tag = config_string(data, [*path, "image", "tag"])
         self.ref = constellation.ImageReference(repo, name, tag)
         self.port = config_integer(data, [*path, "port"])
-        self.dns_provider = config_string(data, [*path, "dns_provider"])
+        self.dns_provider = config_string(data, [*path, "dns_provider"], True)
         self.env = config_dict(data, [*path, "env"])
         if "ACME_BUDDY_STAGING" in os.environ:
             self.env["ACME_BUDDY_STAGING"] = os.environ["ACME_BUDDY_STAGING"]
+        if "ACME_BUDDY_SELF_SIGNED" in os.environ:
+            self.env["ACME_BUDDY_STAGING"] = os.environ["ACME_BUDDY_SELF_SIGNED"]
         self.email = config_string(data, [*path, "email"])
         self.additional_domains = []
         if "additional_domains" in config_dict(data, path):
@@ -52,8 +54,6 @@ def acme_buddy_container(
             domain_names,
             "--email",
             cfg.email,
-            "--dns-provider",
-            cfg.dns_provider,
             "--certificate-path",
             "/tls/certificate.pem",
             "--key-path",
@@ -62,6 +62,10 @@ def acme_buddy_container(
             "/tls/account.json",
             "--reload-container",
             proxy,
-        ],
+        ] + (
+            ["--dns-provider", cfg.dns_provider]
+            if cfg.dns_provider is not None
+            else []
+        )
     )
     return acme
