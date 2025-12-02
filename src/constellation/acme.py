@@ -18,11 +18,13 @@ class AcmeBuddyConfig:
         self.port = config_integer(data, [*path, "port"])
         self.dns_provider = config_string(data, [*path, "dns_provider"], True)
         self.env = config_dict(data, [*path, "env"])
-        self.env.update({
-            var: os.environ[var]
-            for var in ("ACME_BUDDY_STAGING", "ACME_BUDDY_SELF_SIGNED")
-            if var in os.environ
-        })
+        self.env.update(
+            {
+                var: os.environ[var]
+                for var in ("ACME_BUDDY_STAGING", "ACME_BUDDY_SELF_SIGNED")
+                if var in os.environ
+            }
+        )
         self.email = config_string(data, [*path, "email"])
         self.additional_domains = []
         if "additional_domains" in config_dict(data, path):
