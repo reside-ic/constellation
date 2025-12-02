@@ -52,7 +52,7 @@ def resolve_secrets_object(obj, client):
         if isinstance(v, dict):
             resolve_secrets_dict(v, client)
 
-        if is_dataclass(v) and not isinstance(v, type):
+        if is_dataclass_instance(v):
             resolve_secrets_object(v, client)
 
 
