@@ -5,9 +5,10 @@ from constellation.constellation import (
     ConstellationService,
     ConstellationVolumeMount,
 )
-from constellation.util import ImageReference
+from constellation.util import BuildSpec, ImageReference
 
 __all__ = [
+    "BuildSpec",
     "Constellation",
     "ConstellationBindMount",
     "ConstellationContainer",

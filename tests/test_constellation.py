@@ -20,7 +20,7 @@ from constellation.constellation import (
     port_config,
     vault,
 )
-from constellation.util import ImageReference, rand_str
+from constellation.util import BuildSpec, ImageReference, rand_str
 
 
 def drop_image(ref):
@@ -634,5 +634,24 @@ def test_constellation_can_set_labels():
 
     assert container.get("prefix").labels == {}
     assert container_label.get("prefix").labels == labels
+
+    obj.destroy()
+
+
+def test_constellation_can_build_image(tmp_path):
+    (tmp_path / "Dockerfile").write_text(
+        """
+FROM alpine:latest
+CMD ["echo", "Hello, World"]
+"""
+    )
+
+    container = ConstellationContainer("container", BuildSpec(str(tmp_path)))
+
+    obj = Constellation("project", "prefix", [container], "network", None)
+    obj.start()
+
+    log = container.get("prefix").logs().decode("utf-8")
+    assert "Hello, World\n" == log
 
     obj.destroy()
