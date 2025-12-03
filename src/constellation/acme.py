@@ -64,7 +64,7 @@ def acme_buddy_container(
         + (
             ["--dns-provider", cfg.dns_provider]
             if cfg.dns_provider is not None
-            else []
+            else ["--self-signed"]
         ),
     )
     return acme
