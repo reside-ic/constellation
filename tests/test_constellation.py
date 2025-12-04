@@ -200,26 +200,17 @@ def test_container_simple():
     assert f.getvalue() == ""
 
 
-def test_pull_missing_container_on_start(capsys):
+def test_pull_missing_container_on_prepare(capsys):
     nm = rand_str(n=10, prefix="")
     ref = ImageReference("library", "redis", "5.0")
 
     drop_image(str(ref))
 
     x = ConstellationContainer(nm, ref)
-    assert x.name_external("prefix") == f"prefix-{nm}"
-    assert not x.exists("prefix")
-    assert x.get("prefix") is None
-    nw = ConstellationNetwork(constellation_rand_str())
-    nw.create()
+    x.prepare_image(pull=False)
 
-    x.start("prefix", network=nw, volumes=None)
     res = capsys.readouterr()
     assert "Pulling docker image" in res.out
-    x.stop("prefix")
-    x.stop("prefix", True)
-    x.remove("prefix")
-    nw.remove()
 
 
 def test_container_start_stop_remove():
@@ -227,6 +218,7 @@ def test_container_start_stop_remove():
     cl = docker.client.from_env()
     cl.images.pull("library/redis:5.0")
     x = ConstellationContainer(nm, "library/redis:5.0")
+    x.prepare_image(pull=False)
     nw = ConstellationNetwork(constellation_rand_str())
     try:
         nw.create()
@@ -250,6 +242,7 @@ def test_container_start_configure():
         cl = docker.client.from_env()
         cl.images.pull("library/redis:5.0")
         x = ConstellationContainer(nm, "library/redis:5.0", configure=configure)
+        x.prepare_image(pull=False)
         nw = ConstellationNetwork(constellation_rand_str())
         nw.create()
         x.start("prefix", nw, None)
@@ -268,6 +261,7 @@ def test_container_ports():
         x = ConstellationContainer(
             nm, "library/alpine:latest", ports=[80, (3000, 8080)]
         )
+        x.prepare_image(pull=False)
         nw = ConstellationNetwork(constellation_rand_str())
         nw.create()
         x.start("prefix", nw, None)
@@ -286,7 +280,7 @@ def test_container_pull():
     ref = "library/hello-world:latest"
     x = ConstellationContainer("hello", ref)
     drop_image(ref)
-    x.pull_image()
+    x.prepare_image(pull=True)
     assert docker_util.image_exists(ref)
 
 
@@ -306,7 +300,7 @@ def test_container_collection():
         obj.get("foo", prefix)
 
     assert obj.exists(prefix) == [False, False]
-    obj.pull_images()
+    obj.prepare_images(pull=True)
     obj.start(prefix, nw, [])
 
     cl = obj.get("client", prefix)

@@ -1,11 +1,11 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import docker
 
 from constellation import docker_util, vault
-from constellation.util import BuildSpec, rand_str, tabulate
+from constellation.util import BuildSpec, ImageReference, rand_str, tabulate
 
 
 class Constellation:
@@ -116,7 +116,7 @@ class ConstellationContainer:
     def __init__(
         self,
         name,
-        image,
+        image: Union[ImageReference, BuildSpec],
         args=None,
         mounts=None,
         ports=None,
@@ -226,7 +226,9 @@ class ConstellationContainer:
 # This could be achieved by inheriting from ConstellationContainer but
 # this seems more like a has-a than an is-a relationship.
 class ConstellationService:
-    def __init__(self, name, image, scale, **kwargs):
+    def __init__(
+        self, name, image: Union[ImageReference, BuildSpec], scale, **kwargs
+    ):
         self.name = name
         self.image = image
         self.scale = scale

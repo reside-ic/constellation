@@ -15,6 +15,7 @@ class ImageReference:
 
 @dataclass
 class BuildSpec:
+    # Path to the directory containing the Dockerfile
     path: str
 
 
