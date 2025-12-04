@@ -1,15 +1,22 @@
 import random
 import string
+from dataclasses import dataclass
 
 
+@dataclass
 class ImageReference:
-    def __init__(self, repo, name, tag):
-        self.repo = repo
-        self.name = name
-        self.tag = tag
+    repo: str
+    name: str
+    tag: str
 
     def __str__(self):
         return f"{self.repo}/{self.name}:{self.tag}"
+
+
+@dataclass
+class BuildSpec:
+    # Path to the directory containing the Dockerfile
+    path: str
 
 
 def tabulate(x):

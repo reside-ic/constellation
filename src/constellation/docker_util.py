@@ -6,6 +6,8 @@ import time
 
 import docker
 
+from constellation.util import BuildSpec
+
 
 def ensure_network(name):
     client = docker.client.from_env()
@@ -225,6 +227,14 @@ def image_pull(name, ref):
     status = "unchanged" if prev == curr else "updated"
     print(f"    `-> {curr} ({status})")
     return prev != curr
+
+
+def image_build(name: str, spec: BuildSpec):
+    client = docker.client.from_env()
+    print(f"Building docker image for {name} from {spec.path}")
+    image, _ = client.images.build(path=spec.path)
+    print(f"    `-> {image.id}")
+    return image.id
 
 
 def containers_matching(prefix, stopped):

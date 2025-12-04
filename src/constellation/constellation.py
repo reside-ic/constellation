@@ -1,11 +1,11 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import docker
 
 from constellation import docker_util, vault
-from constellation.util import rand_str, tabulate
+from constellation.util import BuildSpec, ImageReference, rand_str, tabulate
 
 
 class Constellation:
@@ -65,8 +65,7 @@ class Constellation:
             raise Exception(msg)
         if self.vault_config:
             vault.resolve_secrets(self.data, self.vault_config.client())
-        if pull_images:
-            self.containers.pull_images()
+        self.containers.prepare_images(pull=pull_images)
         self.network.create()
         self.volumes.create()
         self.containers.start(
@@ -82,8 +81,7 @@ class Constellation:
             self.volumes.remove()
 
     def restart(self, pull_images=True):
-        if pull_images:
-            self.containers.pull_images()
+        self.containers.prepare_images(pull=pull_images)
         self.stop()
         self.start()
 
@@ -118,7 +116,7 @@ class ConstellationContainer:
     def __init__(
         self,
         name,
-        image,
+        image: Union[ImageReference, BuildSpec],
         args=None,
         mounts=None,
         ports=None,
@@ -143,12 +141,20 @@ class ConstellationContainer:
         self.labels = labels
         self.preconfigure = preconfigure
         self.network = network
+        self.image_id = None
 
     def name_external(self, prefix):
         return f"{prefix}-{self.name}"
 
-    def pull_image(self):
-        docker_util.image_pull(self.name, str(self.image))
+    def prepare_image(self, *, pull: bool):
+        if isinstance(self.image, BuildSpec):
+            self.image_id = docker_util.image_build(self.name, self.image)
+        elif pull:
+            docker_util.image_pull(self.name, str(self.image))
+            self.image_id = str(self.image)
+        else:
+            docker_util.ensure_image(self.name, str(self.image))
+            self.image_id = str(self.image)
 
     def exists(self, prefix):
         return docker_util.container_exists(self.name_external(prefix))
@@ -156,7 +162,7 @@ class ConstellationContainer:
     def start(self, prefix, network, volumes, data=None):
         cl = docker.client.from_env()
         nm = self.name_external(prefix)
-        print(f"Starting {self.name} ({self.image!s})")
+        print(f"Starting {self.name} ({self.image_id})")
         mounts = [x.to_mount(volumes) for x in self.mounts]
 
         if self.ports_config:
@@ -171,9 +177,8 @@ class ConstellationContainer:
         networking_config = cl.api.create_networking_config(
             {f"{network.name}": endpoint_config}
         )
-        docker_util.ensure_image(self.name, str(self.image))
         x_obj = cl.api.create_container(
-            str(self.image),
+            self.image_id,
             self.args,
             name=nm,
             detach=True,
@@ -221,7 +226,9 @@ class ConstellationContainer:
 # This could be achieved by inheriting from ConstellationContainer but
 # this seems more like a has-a than an is-a relationship.
 class ConstellationService:
-    def __init__(self, name, image, scale, **kwargs):
+    def __init__(
+        self, name, image: Union[ImageReference, BuildSpec], scale, **kwargs
+    ):
         self.name = name
         self.image = image
         self.scale = scale
@@ -231,8 +238,8 @@ class ConstellationService:
     def name_external(self, prefix):
         return f"{self.base.name_external(prefix)}-<i>"
 
-    def pull_image(self):
-        self.base.pull_image()
+    def prepare_image(self, *, pull: bool):
+        return self.base.prepare_image(pull=pull)
 
     def exists(self, prefix):
         return bool(self.get(prefix))
@@ -242,6 +249,7 @@ class ConstellationService:
         for _i in range(self.scale):
             name = f"{self.name}-{rand_str(8)}"
             container = ConstellationContainer(name, self.image, **self.kwargs)
+            container.image_id = self.base.image_id
             container.start(prefix, network, volumes, data)
 
     def get(self, prefix, stopped=False):
@@ -285,13 +293,13 @@ class ConstellationContainerCollection:
     def exists(self, prefix):
         return [x.exists(prefix) for x in self.collection]
 
-    def _apply(self, method, *args, subset=None):
+    def _apply(self, method, *args, subset=None, **kwargs):
         for x in self.collection:
             if subset is None or x.name in subset:
-                x.__getattribute__(method)(*args)
+                x.__getattribute__(method)(*args, **kwargs)
 
-    def pull_images(self):
-        self._apply("pull_image")
+    def prepare_images(self, *, pull):
+        self._apply("prepare_image", pull=pull)
 
     def stop(self, prefix, kill=False):
         self._apply("stop", prefix, kill)
